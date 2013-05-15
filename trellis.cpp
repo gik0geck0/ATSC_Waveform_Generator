@@ -5,7 +5,7 @@
 
 using namespace std;
 
-typedef bit bool;
+typedef bool bit;
 const static int SYMBOL_DELAY = 12; // 12 symbol delay in trellis encoding
 
 /*
@@ -57,8 +57,10 @@ void trellisEncoder(vector<bit> bitStream){
 
 }
 
-symbol* getSymbol(vector<bool>, int& symbolCounter){
-
+symbol* getSymbol(vector<bit> bitStream, int& symbolCounter){
+	symbol* outputSymbol = new symbol;
+	outputSymbol->ms = bitStream[symbolCounter*2];
+	outputSymbol->ls = bitStream[symbolCounter*2+1];	
 }
 
 /*
