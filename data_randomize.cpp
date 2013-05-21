@@ -1,12 +1,24 @@
-#include <vector>
+// NOTES
+// This fuction changes the bits in the vector
+// The MSB is vector.at(0)
+
+
+
+/*#include <vector>
 #include <stdio.h>
 typedef bool bit;
 using namespace std;
 
-/*
 int data_randomize(vector<bit>* mpeg_frame);
 
 // This is for testing purposes
+
+// input:
+// MSB on right
+// 00110010110011010111011000100100
+
+// output:
+// 10101011001100011100000000100111
 
 int main()
 {
@@ -48,7 +60,7 @@ int main()
 	testBit.push_back(0);
 	testBit.push_back(0);
 
-	for(int i = 0; i < testBit.size(); i++)
+	for(int i = testBit.size() -1; i >=0; i--)
 	{
 		printf("%i",(int) testBit.at(i));
 	}
@@ -56,7 +68,7 @@ int main()
 
 	data_randomize(&testBit);
 
-	for(int i = 0; i < testBit.size(); i++)
+	for(int i = testBit.size() -1; i >=0; i--)
 	{
 		printf("%i",(int) testBit.at(i));
 	}
@@ -125,6 +137,7 @@ int data_randomize(vector<bit> *mpeg_frame)
 		polynomial[2-1]  = polynomial[1-1 ] ^ feedbackBit;
 		polynomial[1-1]  = feedbackBit;
 
+		// reassignes the D values
 		fixedRandomizingBytes[0] = polynomial[1-1];
 		fixedRandomizingBytes[1] = polynomial[3-1];
 		fixedRandomizingBytes[2] = polynomial[4-1];
