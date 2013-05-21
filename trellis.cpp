@@ -60,23 +60,22 @@ outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int 
 	This function will convert 3 bits into a voltage level
 
 	Precondition: bitStream is a multiple of 3
-	Postcondition: new vector of ints is produced and a pointer to it is returned
+	Postcondition: new vector of int8_t is produced and a pointer to it is returned. uses int8_t to maxmize memory efficency
 
 */
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream);
 
 /*
-	This function is the Master function. One call to this will preform all the necessary steps and modify the bitstream with the trellis encoding
-	While the trellis encoding block does in fact output a voltage level instead of bits, this version of the function outputs the bit stream, incase the sync mux wants to throw in voltages as bits or levels. Another function will convert bits to voltage levels
+	This function is the Master function. One call to this will preform all the necessary steps and modify the bitstream with the trellis encoding, returning a vector of int8_t
 
 	Precondition:Bit steam is a multiple of 2
 	Postcondition:The bit stream is altered with the trellis encoding done.
 */
 vector<int8_t>* trellisEncoder(vector<bit>* bitStream);
 
-
+//this main exists only for the purpose debuging. once the final product is finished this function will be deleted
 int main(){
-	vector<bit>* test = new vector<bit>;
+	vector<bit>* test = new vector<bit>; //a test stream of bits
 	test->push_back(1);
 	test->push_back(0);
 
@@ -225,17 +224,19 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 	currentSymbol = NULL;
 	delete output;
 	output = NULL;
+	delete D1, D2, D3;
+	D1 = NULL; D2 = NULL; D3 = NULL;
 
 	if(newBitStream->size() != RESULTING_BIT_STREAM_LENGTH){
 		cout << "In function trellisEncoder: Unexpected resulting bit stream length\nExpected " << RESULTING_BIT_STREAM_LENGTH << "\nGot " << newBitStream->size()<< endl;
 	}
 	delete bitStream; //remove old data
-	bitStream = newBitStream;
-	vector<int8_t>* levels;
-	levels = bitsToLevel(bitStream);
-	delete bitStream; 
-	bitStream = NULL;
-	return levels;
+	bitStream = newBitStream; //reassign pointers
+	vector<int8_t>* levels; // the returned pointer of vectors
+	levels = bitsToLevel(bitStream); //convert stream of bits to voltage levels
+	delete bitStream; //delete old bitstream
+	bitStream = NULL; //reassign dangling pointer
+	return levels; 
 }
 
 outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int symbolCounter){
@@ -283,23 +284,23 @@ void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 
 */
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream){
-	if(bitStream->size() % 3 != 0){
+	if(bitStream->size() % 3 != 0){//check for size of stream, make sure its valid
 		cout << "In function bitsToLevel: Requires a bitstream lenght that is a multiple of three\nABORTING" << endl;
 		exit(1);
 	}
 	vector<int8_t>* voltageLevels = new vector<int8_t>;
-	for(int i = 0; i < bitStream->size()/3; i++){
+	for(int i = 0; i < bitStream->size()/3; i++){ // iterate by every symbol(which is now 3 bits long)
 		int level = 7; //voltage is defaulted to 7 or 111, will subtract as needed
 		for(int j = 0; j < 3; j++){
-			if(j == 0){
+			if(j == 0){ // most sig bit
 				if((*bitStream)[i*3+j] == false)
 					level -= 8;
 			}
-			else if(j == 1){
+			else if(j == 1){ //mid bit
 				if((*bitStream)[i*3+j] == false)
 					level -= 4;	
 			}
-			else{
+			else{ // least sig bit
 				if((*bitStream)[i*3+j] == false)
 					level -= 2;
 			}
