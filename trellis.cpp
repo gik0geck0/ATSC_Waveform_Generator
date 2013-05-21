@@ -28,8 +28,8 @@ struct outputBits {
 };
 
 //returns the symbol pointer from stream
-//Precondition: bit stream is a multiple of 2
-//Postcondition: pointer to symbol on heap returned
+//	Precondition: bit stream is a multiple of 2
+//	Postcondition: pointer to symbol on heap returned
 symbol* getSymbol(vector<bit> *bitStream, int symbolCounter);
 
 
@@ -57,10 +57,10 @@ outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int 
 
 
 /*
-	This function will convert 3 bits into a voltage level
+	This function will convert 3 bits into a voltage level as defined by the ATSC A/53 part 2 document
 
 	Precondition: bitStream is a multiple of 3
-	Postcondition: new vector of int8_t is produced and a pointer to it is returned. uses int8_t to maxmize memory efficency
+	Postcondition: new vector of int8_t is produced and a pointer to it is returned.
 
 */
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream);
@@ -188,7 +188,7 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 		D2->push_back(0);
 		D3->push_back(0);
 	}
-	for(int i = 0; i < bitStream->size()/2; i++){
+	for(int i = 0; i < bitStream->size()/2; i++){ //iterate by symbol(which is currently 2 bits)
 		currentSymbol = getSymbol(bitStream, symbolCounter);
 		differentialEncoder(currentSymbol, D1, symbolCounter);
 		output = convolutionEncoder(currentSymbol, D2, D3, symbolCounter);
@@ -196,10 +196,13 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 		newBitStream->push_back(output->z1);
 		newBitStream->push_back(output->z0);
 		symbolCounter++;
+		//free up memory, pointers will be reassigned
 		delete output;
 		delete currentSymbol;
-		output=NULL;
+		//just for good coding practice, removing any dangling pointerss. 
+		output=NULL; 
 		currentSymbol=NULL;
+		//debug block
 		/*
 		if(symbolCounter %12 == 0){
 			cout << "D1 is currently at\n";
@@ -226,7 +229,7 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 	output = NULL;
 	delete D1, D2, D3;
 	D1 = NULL; D2 = NULL; D3 = NULL;
-
+	//make sure the resulting bit stream is the right length, splurts out a warning if not, but will still return result
 	if(newBitStream->size() != RESULTING_BIT_STREAM_LENGTH){
 		cout << "In function trellisEncoder: Unexpected resulting bit stream length\nExpected " << RESULTING_BIT_STREAM_LENGTH << "\nGot " << newBitStream->size()<< endl;
 	}
@@ -257,14 +260,6 @@ symbol* getSymbol(vector<bit>* bitStream, int symbolCounter){
 	return outputSymbol;
 }
 
-/*
-	The DifferentialEncoder function performs the operation defined in the A/53 part 2 page 15 differential encoder
-       	The function modifies the most significant bit of the incoming symbol by XOR'ing it with the output of the symbol buffer D1
-
-	Precondition:none
-	Postcondition:X has had its most significant bit modified. Least significant bit unmodified
-
-*/
 void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 	bit outputBit;
 	outputBit = x->ms ^ (*D1)[symbolCounter % SYMBOL_DELAY];
@@ -276,13 +271,6 @@ void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 
 
 
-/*
-	This function will convert 3 bits into a voltage level
-
-	Precondition: bitStream is a multiple of 3
-	Postcondition: new vector of ints is produced and a pointer to it is returned
-
-*/
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream){
 	if(bitStream->size() % 3 != 0){//check for size of stream, make sure its valid
 		cout << "In function bitsToLevel: Requires a bitstream lenght that is a multiple of three\nABORTING" << endl;
