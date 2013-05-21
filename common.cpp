@@ -1,4 +1,4 @@
-#pragma std::once
+#pragma once
 #include <vector>
 #include <stdint.h>
 typedef bool bit;
