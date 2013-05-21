@@ -1,9 +1,15 @@
-vector<byte>* makeBytesFromBits(vector<bit> *bitStream)
+#pragma std::once
+#include <vector>
+#include <stdint.h>
+typedef bool bit;
+typedef uint8_t byte;
+
+std::vector<byte>* makeBytesFromBits(std::vector<bit> *bitStream)
 {
 	// Does not delete bitStream
 	int i,j;
 	byte b;
-	vector<byte> *byteStream = new vector<byte>();
+	std::vector<byte> *byteStream = new std::vector<byte>();
 	for(i = 0; i < bitStream->size(); i+=8)
 	{
 		b =  (*bitStream)[i];
@@ -17,11 +23,11 @@ vector<byte>* makeBytesFromBits(vector<bit> *bitStream)
 	return byteStream;
 }
 
-vector<bit> *makeBitsFromBytes(vector<byte> *byteStream)
+std::vector<bit> *makeBitsFromBytes(std::vector<byte> *byteStream)
 {
 	// Does not delete byteStream
 	byte i, j, mask;
-	vector<bit> *bitStream = new vector<bit>();
+	std::vector<bit> *bitStream = new std::vector<bit>();
 
 	for(i = 0; i < byteStream->size(); i++)
 	{
