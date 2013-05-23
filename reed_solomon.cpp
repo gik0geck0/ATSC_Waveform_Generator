@@ -11,7 +11,7 @@ uint8_t gmul(uint8_t a, uint8_t b);
 uint8_t gsub(uint8_t a, uint8_t b);
 uint8_t gadd(uint8_t a, uint8_t b);
 
-void reed_solomon_parity(std::vector<bit> input_stream);
+void reed_solomon_parity(std::vector<bit>* input_stream);
 byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open);
 
 // This is defined specifically for the ATSC standard
@@ -27,10 +27,22 @@ int main() {
         data_stream.push_back(arr[i]);
     }
 
-    reed_solomon_parity(data_stream);
+    reed_solomon_parity(&data_stream);
+    printf("Data Bytes {\n");
+    for (int i=0; i < data_stream.size(); i+=8) {
+        for (int j=0; j < 8; j++) {
+            printf("%i, ", (int) data_stream.at(i+j));
+        }
+        printf("\n");
+    }
+    printf("}\n");
 }
 
-void reed_solomon_parity(std::vector<bit> input_bits) {
+void test_reed_solomon() {
+    
+}
+
+void reed_solomon_parity(std::vector<bit>* input_bits) {
     // This can be thought of as X.
     // The FIRST element is what's stored in the GATE
     // index = power of X
@@ -39,22 +51,30 @@ void reed_solomon_parity(std::vector<bit> input_bits) {
         outputs[i] = 0;
     }
 
-    std::vector<byte>* input_bytes = makeBytesFromBits(&input_bits);
+    std::vector<byte>* input_bytes = makeBytesFromBits(input_bits);
 
     for (int i=0; i < input_bytes->size(); i++) {
 
         solomon_iteration(outputs, (*input_bytes)[i], true);
-        
+
         printf("X array: { ");
         for (int j=0; j < 21; j++) {
             printf("%i, ", outputs[j]);
         }
         printf("}\n");
+        
     }
 
-    for (int i=0; i < 20; i++) {
-        byte output = solomon_iteration(outputs, 0, false);
-        printf("Output parity byte: %i\n", output);
+    // outputs now contains the parity bytes
+    std::vector<byte> parity_bytes;
+    for (int i=1; i < 21; i++) {
+        parity_bytes.push_back(outputs[i]);
+    }
+
+    std::vector<bit>* parity_bits = makeBitsFromBytes(&parity_bytes);
+    
+    for ( int i=0; i < parity_bits->size(); i++) {
+        input_bits->push_back(parity_bits->at(i));
     }
 }
 
@@ -68,11 +88,18 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
     }
 
     for (int i=1; i < 21; i++) {
+        /*
+        printf("%i: ", i);
+        printf("%i -> ", outputs[i]);
+        */
         if (i > 1) {
             outputs[i] = gadd(outputs[i-1], gmul(alphas[i], outputs[0]));
         } else {
             outputs[i] = gmul(alphas[i], outputs[0]);
         }
+        /*
+        printf("%i\n", outputs[i]);
+        */
     }
 
 
