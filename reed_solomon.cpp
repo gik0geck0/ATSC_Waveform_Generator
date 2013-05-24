@@ -23,20 +23,22 @@ int main() {
     uint8_t b = 0xCA;
 
     bool arr[] = { 0,1,0,1,0,1,0,1, 0,1,0,1,1,1,0,1, 1,1,0,1,0,0,0,1 };
-    std::vector<bit> data_stream;
+    std::vector<bit>* data_stream = new std::vector<bit>();
     for (int i=0; i < 24; i++) {
-        data_stream.push_back(arr[i]);
+        data_stream->push_back(arr[i]);
     }
 
-    reed_solomon_parity(&data_stream);
+    add_reed_solomon_parity(data_stream);
     printf("Data Bytes {\n");
-    for (int i=0; i < data_stream.size(); i+=8) {
+    for (int i=0; i < data_stream->size(); i+=8) {
         for (int j=0; j < 8; j++) {
-            printf("%i, ", (int) data_stream.at(i+j));
+            printf("%i, ", (int) data_stream->at(i+j));
         }
         printf("\n");
     }
     printf("}\n");
+
+    exit(0);
 }
 */
 
@@ -68,12 +70,13 @@ void add_reed_solomon_parity(std::vector<bit>* input_bits) {
 
         solomon_iteration(outputs, (*input_bytes)[i], true);
 
+        /*
         printf("X array: { ");
         for (int j=0; j < 21; j++) {
             printf("%i, ", outputs[j]);
         }
         printf("}\n");
-        
+        */
     }
 
     // outputs now contains the parity bytes
@@ -87,6 +90,9 @@ void add_reed_solomon_parity(std::vector<bit>* input_bits) {
     for ( int i=0; i < parity_bits->size(); i++) {
         input_bits->push_back(parity_bits->at(i));
     }
+
+    delete input_bytes;
+    delete parity_bits;
 }
 
 /*
@@ -98,7 +104,6 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
         // The GATE is open, so the feedback is active
         outputs[0] = gadd(outputs[19], input_byte);
     } else {
-        printf("Resetting gate to 0\n");
         outputs[0] = 0;
     }
 

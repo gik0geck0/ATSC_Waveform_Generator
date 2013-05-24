@@ -16,9 +16,11 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	vector<byte>* byteSteam;
 	vector< vector<bit>* >* bitPackage;
 
-	if(!((inputStream->size() % 188) == 0))
+    printf("Mod 188? %i\n", inputStream->size() % 188);
+	if(!((inputStream->size() % 188) == 0)) {
         printf("Input stream was of an invalid size\n");
 		exit(1);
+    }
 
 	numberOfPackets = inputStream->size() / 188;
 	bitPackage = new vector<vector<bit>*>();
@@ -34,7 +36,6 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	}
 	byteSteam = NULL;
 	
-    printf("Deleting old input stream\n");
 	delete inputStream;
 	inputStream = NULL;
 	return bitPackage;

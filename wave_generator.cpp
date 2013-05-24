@@ -25,10 +25,10 @@ int main() {
     char* file = "tmp/kittens.mpg";
 
     // read in MPEG
-    std::vector<byte> mpeg_stream;
+    std::vector<byte>* mpeg_stream = new vector<byte>();
 
     printf("Reading in file\n");
-    read_in_bytes(file, &mpeg_stream);
+    read_in_bytes(file, mpeg_stream);
 
 
     // Prints out every 188th byte. It should be 0x47
@@ -48,7 +48,7 @@ int main() {
     // get rid of the MPEG sync byte, so it can later be replaced by the ATSC sync byte
     // divide into 187 byte segments, WITHOUT any sync byte
     printf("Removing MPEG sync byte, and dividing into mpeg packets\n");
-    std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(&mpeg_stream);
+    std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(mpeg_stream);
 
     vector<vector<int8_t>*>* vsb8_packets = new vector<vector<int8_t>*>();
 
@@ -73,12 +73,18 @@ int main() {
     }
 
     // synchronize the fields
-    printf("Syncing packets");
+    printf("Syncing packets\n");
     syncMux(vsb8_packets);
     
     // Pilot insertion
-    printf("Performing Pilot insertion");
+    printf("Performing Pilot insertion\n");
     vector<vector<float>*>* vsb8_signal = pilot_insertion(vsb8_packets);
 
     // Send to Wave-form generator
+    
+    // Cleanup
+    for (int i=0; i < vsb8_signal->size(); i++) {
+        delete vsb8_signal->at(i);
+    }
+    delete vsb8_signal;
 }
