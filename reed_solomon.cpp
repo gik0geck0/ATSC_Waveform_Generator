@@ -17,6 +17,7 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open);
 // This is defined specifically for the ATSC standard
 byte alphas[] = { 174, 165, 121, 121, 198, 228, 22, 187, 36, 69, 150, 112, 220, 6, 99, 111, 5, 240, 186, 152, 1 };
 
+/*
 int main() {
     uint8_t a = 0x53;
     uint8_t b = 0xCA;
@@ -37,6 +38,7 @@ int main() {
     }
     printf("}\n");
 }
+*/
 
 void test_reed_solomon() {
     
@@ -48,11 +50,13 @@ void test_reed_solomon() {
  */
 void reed_solomon_parity(std::vector<bit>* input_bits) {
     
+    /*
     if (input_bits->size() != 1496) {
         printf("Reed Solomon Parity for ATSC is expected to apply to a single segment (1496 bits).\n");
         printf("Expected Input Length: 1496, but got %i\n", input_bits->size());
         exit(-1);
     }
+    */
 
     // This can be thought of as X.
     // The FIRST element is what's stored in the GATE
@@ -102,7 +106,7 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
         outputs[0] = 0;
     }
 
-    for (int i=1; i < 21; i++) {
+    for (int i=21; i > 0; i--) {
         /*
         printf("%i: ", i);
         printf("%i -> ", outputs[i]);
