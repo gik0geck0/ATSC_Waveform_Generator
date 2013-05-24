@@ -56,6 +56,8 @@ void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
         }
     }
 
+    delete tape;
+
     fclose(f);
 }
 
@@ -71,6 +73,8 @@ void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
     for (int i=0; i < filelen; i++) {
         input_stream->push_back((byte) tape[i]);
     }
+
+    delete tape;
 
     fclose(f);
 }
