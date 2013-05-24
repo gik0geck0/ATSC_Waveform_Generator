@@ -263,6 +263,8 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 	
 }
 
+/*
 int main(){
 	return 0;
 }
+*/

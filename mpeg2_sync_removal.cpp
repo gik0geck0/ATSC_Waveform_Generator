@@ -17,6 +17,7 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	vector< vector<bit>* >* bitPackage;
 
 	if(!((inputStream->size() % 188) == 0))
+        printf("Input stream was of an invalid size\n");
 		exit(1);
 
 	numberOfPackets = inputStream->size() / 188;
@@ -33,10 +34,46 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	}
 	byteSteam = NULL;
 	
+    printf("Deleting old input stream\n");
 	delete inputStream;
 	inputStream = NULL;
 	return bitPackage;
 }
+
+void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
+    FILE* f = fopen(file_name, "rb");
+    fseek(f, 0L, SEEK_END);
+    long filelen = ftell(f);
+    rewind(f);
+
+    char* tape = (char*) malloc(filelen); // Check for out-of-memory errors!
+    fread((void*)tape, filelen, 1, f);
+
+    for (int i=0; i < filelen; i++) {
+        for (int i=0; i < 8; i++) {
+            input_stream->push_back( (tape[i] << i) & 0x80);
+        }
+    }
+
+    fclose(f);
+}
+
+void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
+    FILE* f = fopen(file_name, "rb");
+    fseek(f, 0L, SEEK_END);
+    long filelen = ftell(f);
+    rewind(f);
+
+    char* tape = (char*) malloc(filelen); // Check for out-of-memory errors!
+    fread((void*)tape, filelen, 1, f);
+
+    for (int i=0; i < filelen; i++) {
+        input_stream->push_back((byte) tape[i]);
+    }
+
+    fclose(f);
+}
+
 // test
 /*
 int main()

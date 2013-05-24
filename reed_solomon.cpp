@@ -11,7 +11,7 @@ uint8_t gmul(uint8_t a, uint8_t b);
 uint8_t gsub(uint8_t a, uint8_t b);
 uint8_t gadd(uint8_t a, uint8_t b);
 
-void reed_solomon_parity(std::vector<bit>* input_stream);
+void add_reed_solomon_parity(std::vector<bit>* input_stream);
 byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open);
 
 // This is defined specifically for the ATSC standard
@@ -40,15 +40,11 @@ int main() {
 }
 */
 
-void test_reed_solomon() {
-    
-}
-
 /*
  *  Takes a segment of bits, and appends Reed-Solomon parity bits to the end
  *  Length of Input vector is expected to be 187 bytes ( 1496 bits )
  */
-void reed_solomon_parity(std::vector<bit>* input_bits) {
+void add_reed_solomon_parity(std::vector<bit>* input_bits) {
     
     /*
     if (input_bits->size() != 1496) {

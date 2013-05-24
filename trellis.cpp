@@ -74,6 +74,7 @@ vector<int8_t>* bitsToLevel(vector<bit>* bitStream);
 vector<int8_t>* trellisEncoder(vector<bit>* bitStream);
 
 //this main exists only for the purpose debuging. once the final product is finished this function will be deleted
+/*
 int main(){
 	vector<bit>* test = new vector<bit>; //a test stream of bits
 	test->push_back(1);
@@ -162,6 +163,7 @@ int main(){
 	}
 	return 0;
 }
+*/
 
 
 vector<int8_t>* trellisEncoder(vector<bit>* bitStream){

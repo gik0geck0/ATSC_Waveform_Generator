@@ -52,6 +52,7 @@ vector<bit>* data_interleaving(vector<bit> *bitStream)
 
 
 // for testing
+/*
 int main(void)
 {
 	int i;
@@ -69,7 +70,6 @@ int main(void)
 		printf("%i\n",byteStream->at(i));
 	}
 
-/*
 	// testing the function makeByteFromBits and makeBitsFromBytes
 	
 	testBit.push_back(0);
@@ -109,7 +109,8 @@ int main(void)
 		printf("%i",(int) testBit.at(i));
 	}
 	printf("\n");
-*/
+
 	return 0;
 
 }
+*/
