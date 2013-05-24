@@ -41,17 +41,22 @@ vector<bit>* data_interleaving(vector<bit> *bitStream)
 	}
 	delete byteStream;
 	byteStream = NULL;
+
+	// new byte stream to pull data form the interleaver
 	byteStream = new vector<byte>();
 	for(i = 0; i < 207; i++)
 			byteStream->push_back(convolutionalInterleaver[i/4][i%4]);
 	// make bit stream
 	interleavedBits = makeBitsFromBytes(byteStream);
+	delete byteStream;
+	byteStream = NULL;
 	return interleavedBits;
 }
 
 
 
 // for testing
+/*
 int main(void)
 {
 	int i;
@@ -69,7 +74,6 @@ int main(void)
 		printf("%i\n",byteStream->at(i));
 	}
 
-/*
 	// testing the function makeByteFromBits and makeBitsFromBytes
 	
 	testBit.push_back(0);
@@ -109,7 +113,8 @@ int main(void)
 		printf("%i",(int) testBit.at(i));
 	}
 	printf("\n");
-*/
+
 	return 0;
 
 }
+*/

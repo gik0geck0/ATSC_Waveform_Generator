@@ -263,6 +263,7 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 	
 }
 
+/*
 int main(){
 	vector<segment*>* test = new vector<segment*>;
 	segment* derp;
@@ -283,3 +284,4 @@ int main(){
 
 	return 0;
 }
+*/
