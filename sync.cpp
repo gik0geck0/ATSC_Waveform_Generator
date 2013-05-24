@@ -138,35 +138,35 @@ vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum){
 
 vector<int8_t>* assignModeFlag(){
 	vector<int8_t>* mode = new vector<int8_t>;
-	mode->push_back(0);
-	mode->push_back(0);
-	mode->push_back(0);
-	mode->push_back(0);
+	mode->push_back(-5);
+	mode->push_back(-5);
+	mode->push_back(-5);
+	mode->push_back(-5);
 
-	mode->push_back(1);
-	mode->push_back(0);
-	mode->push_back(1);
-	mode->push_back(0);
+	mode->push_back(5);
+	mode->push_back(-5);
+	mode->push_back(5);
+	mode->push_back(-5);
 
-	mode->push_back(0);
-	mode->push_back(1);
-	mode->push_back(0);
-	mode->push_back(1);
+	mode->push_back(-5);
+	mode->push_back(5);
+	mode->push_back(-5);
+	mode->push_back(5);
 
-	mode->push_back(1);
-	mode->push_back(1);
-	mode->push_back(1);
-	mode->push_back(1);
+	mode->push_back(5);
+	mode->push_back(5);
+	mode->push_back(5);
+	mode->push_back(5);
 
-	mode->push_back(0);
-	mode->push_back(1);
-	mode->push_back(0);
-	mode->push_back(1);
+	mode->push_back(-5);
+	mode->push_back(5);
+	mode->push_back(-5);
+	mode->push_back(5);
 
-	mode->push_back(1);
-	mode->push_back(0);
-	mode->push_back(1);
-	mode->push_back(0);
+	mode->push_back(5);
+	mode->push_back(-5);
+	mode->push_back(5);
+	mode->push_back(-5);
 	return mode;
 }
 
@@ -231,7 +231,6 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 	
 
 	for(int i = 0; i < dataSegments->size(); i++){//for each data segment
-		lastSegment = (*dataSegments)[i];
 		if(i%312 == 0 && i != 0){
 			fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));//append field sync into vector
 			fieldSyncNum++; //may need to make another field sync
@@ -240,6 +239,7 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 		else if(i%312 != 0){
 			evenMult = false;
 		}
+		lastSegment = (*dataSegments)[i];
 	}
 	if(!evenMult){ //if number of segments is not a multiple of 312, then we need to add another field sync
 		fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));
@@ -264,5 +264,22 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 }
 
 int main(){
+	vector<segment*>* test = new vector<segment*>;
+	segment* derp;
+	for(int i = 0,j = -128; i<727; i++, j+=2){
+		derp = new vector<int8_t>;
+		for(int k = 0; k < 828; k++){
+			derp->push_back(j);
+		}
+		test->push_back(derp);
+	}
+	dataFrame* greg = syncMux(test);
+	for(int i = 0; i < greg->size(); i++){
+		for(int j = 0; j < 832; j++){
+			cout << (int)(*(*greg)[i])[j] << " ";
+		}
+		cout << endl;
+	}
+
 	return 0;
 }
