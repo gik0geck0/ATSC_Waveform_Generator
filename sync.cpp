@@ -43,6 +43,31 @@ vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum);
 vector<int8_t>* getLast12Symbols(segment* lastSegment);
 
 
+/*
+  This function is simply to abstract away the hardcoding of the 24 level mode definition. It is always going to be 8VSB trellis coded which is 0000 1010 0101 1111 0101 1010 as defined by the ATSC Standard A/53 Part2 page 22 table 5.3
+
+  Precondition: None
+  Postcondition: None
+*/
+vector<int8_t>* assignModeFlag();
+
+/*
+  This function is simply to abstract away all the function calls associated in making a field sync
+
+  Precondition: Pointer to last segment has at least 12 symbols or the pointer is NULL
+  Postcondition: Pointer to field sync is returned
+*/
+segment* makeNewField(int fieldSyncNum, segment* lastSegment);
+
+/*
+  This function will prepend the segment sync of 5 -5 -5 5 to a particular segment and return a pointer to the segment with the segment sync prepended to it
+
+  Precondition: None
+  Postcondition: Orginal segment returned with segment sync prepended
+*/
+void segSync(segment* seg);
+
+
 vector<int8_t>* pn511(){
 	vector<int8_t>* sequence = new vector<int8_t>;
 	bit x9(0), x8(1), x7(0), x6(0), x5(0), x4(0), x3(0), x2(0), x1(0);
@@ -111,7 +136,133 @@ vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum){
 	return sequence;
 }
 
+vector<int8_t>* assignModeFlag(){
+	vector<int8_t>* mode = new vector<int8_t>;
+	mode->push_back(0);
+	mode->push_back(0);
+	mode->push_back(0);
+	mode->push_back(0);
+
+	mode->push_back(1);
+	mode->push_back(0);
+	mode->push_back(1);
+	mode->push_back(0);
+
+	mode->push_back(0);
+	mode->push_back(1);
+	mode->push_back(0);
+	mode->push_back(1);
+
+	mode->push_back(1);
+	mode->push_back(1);
+	mode->push_back(1);
+	mode->push_back(1);
+
+	mode->push_back(0);
+	mode->push_back(1);
+	mode->push_back(0);
+	mode->push_back(1);
+
+	mode->push_back(1);
+	mode->push_back(0);
+	mode->push_back(1);
+	mode->push_back(0);
+	return mode;
+}
+
+segment* makeNewField(int fieldSyncNum, segment* lastSegment){
+	vector<int8_t>* fieldSync = new vector<int8_t>;
+	vector<int8_t>* mode = assignModeFlag();
+	vector<int8_t>* pn511Block = pn511();
+	vector<int8_t>* pn63Block;
+	vector<int8_t>* last12Symbols = getLast12Symbols(lastSegment);
+	if(pn511Block->size() != 511){
+		cout << "In function makeNewField: pn511Block is not correct size\nExpected 511\nGot " << pn511Block->size() << "\nABORTING";
+		exit(1);
+	}
+	fieldSync->insert(fieldSync->end(), pn511Block->begin(), pn511Block->end()); //append the pn511Block to field sync
+	for(int i = 0; i < 3; i++){
+		pn63Block = pn63(63, fieldSyncNum, i+1);
+		if(pn63Block->size() != 63){
+			cout << "In function makeNewField: pn63Block number " << i+1 << " was not correct size\nExpected 63\nGot " << pn63Block->size() << "\nABORTING";
+			exit(1);
+		}
+		fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end());//append the pn63Block to field sync
+		delete pn63Block;
+	}
+	fieldSync->insert(fieldSync->end(), mode->begin(), mode->end());//append the mode block to field sync
+	pn63Block = pn63(92, fieldSyncNum, 4);// can use any block num, but use 4 just for good measure
+	fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end()); // insert the 92 length pn63 block;
+	fieldSync->insert(fieldSync->end(), last12Symbols->begin(), last12Symbols->end()); //add last 12 symbols
+	//destructors
+	delete mode;
+	delete pn511Block;
+	delete pn63Block;
+	delete last12Symbols;
+	mode = NULL;
+	pn511Block = NULL;
+	pn63Block = NULL;
+	last12Symbols = NULL;
+
+
+	return fieldSync;
+}
+
+void segSync(segment* seg){
+	seg->insert(seg->begin(), 5);
+	seg->insert(seg->begin()+1, -5);
+	seg->insert(seg->begin()+2, -5);
+	seg->insert(seg->begin()+3, 5);
+}	
+
+vector<int8_t>* getLast12Symbols(segment* lastSegment){
+	vector<int8_t>* last12Symbols = new vector<int8_t>;
+	for(int i = lastSegment->size()-12; i < lastSegment->size(); i++){
+		last12Symbols->push_back((*lastSegment)[i]);
+	}
+	return last12Symbols;
+}
+
+dataFrame* syncMux(vector<segment*>* dataSegments){
+	vector<segment*>* fieldSyncs = new vector<segment*>; //will hold fieldsyncs to be inserted later
+	segment* lastSegment;
+	int fieldSyncNum = 1;//will always have at least 1 field sync 
+	bool evenMult = false; //to check if it is an even amount of 312 or not
+	
+
+	for(int i = 0; i < dataSegments->size(); i++){//for each data segment
+		lastSegment = (*dataSegments)[i];
+		if(i%312 == 0 && i != 0){
+			fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));//append field sync into vector
+			fieldSyncNum++; //may need to make another field sync
+			evenMult = true;	
+		}
+		else if(i%312 != 0){
+			evenMult = false;
+		}
+	}
+	if(!evenMult){ //if number of segments is not a multiple of 312, then we need to add another field sync
+		fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));
+	}
+
+
+	int fieldToInsert=0; //the index of the field to insert from the vector fieldSyncs
+	for(int i = 0; i < dataSegments->size(); i++){
+		if(i%313 == 0){
+			dataSegments->insert(dataSegments->begin()+i, (*fieldSyncs)[fieldToInsert]);
+			fieldToInsert++;
+		}
+	}
+	for(int i = 0; i < dataSegments->size(); i++){
+		if((*dataSegments)[i]->size() != 828){
+			cout << "In function syncMux: Encountered unexpected size of segment before segment sync addon at index " << i << endl << "Expected 828\nGot " << (*dataSegments)[i]->size()<<endl;
+		}
+		segSync((*dataSegments)[i]);
+	}
+	return dataSegments;
+	
+}
+
 int main(){
 	return 0;
 }
-
