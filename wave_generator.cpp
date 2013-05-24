@@ -9,16 +9,22 @@ void read_in_file(char* file_name, std::vector<bit>* input_stream);
 
 int main() {
 
-    char* file = "input.txt";
+    char* file = "tmp/kittens.mpg";
 
     // read in MPEG
     std::vector<bit> mpeg_stream;
     read_in_file(file, &mpeg_stream);
 
     /*
-    for (int i=0; i < mpeg_stream.size(); i++) {
-        //std::cout << "Bit " << i << ": " << mpeg_stream[i] << std::endl;
-        printf("Bit %i: %i\n", i, (int) mpeg_stream[i]);
+    printf("Bits read in:\n");
+    for (int i=0; i < mpeg_stream.size(); i+=8) {
+        for (int j=0; j < 8; j+=4) {
+            for (int k=0; k < 4; k++) {
+                printf("%i", (int) mpeg_stream.at(i+j+k));
+            }
+            printf(" ");
+        }
+        printf("\n");
     }
     */
 
@@ -57,7 +63,7 @@ void read_in_file(char* file_name, std::vector<bit>* input_stream) {
         //printf("Reading in byte: %c\n", input_byte);
         for (int i=0; i < 8; i++) {
             input_stream->push_back(input_byte & 0x80);
-            input_byte = input_byte << 1;
+            input_byte <<= 1;
         }
     }
 

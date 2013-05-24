@@ -42,7 +42,18 @@ void test_reed_solomon() {
     
 }
 
+/*
+ *  Takes a segment of bits, and appends Reed-Solomon parity bits to the end
+ *  Length of Input vector is expected to be 187 bytes ( 1496 bits )
+ */
 void reed_solomon_parity(std::vector<bit>* input_bits) {
+    
+    if (input_bits->size() != 1496) {
+        printf("Reed Solomon Parity for ATSC is expected to apply to a single segment (1496 bits).\n");
+        printf("Expected Input Length: 1496, but got %i\n", input_bits->size());
+        exit(-1);
+    }
+
     // This can be thought of as X.
     // The FIRST element is what's stored in the GATE
     // index = power of X
@@ -78,6 +89,10 @@ void reed_solomon_parity(std::vector<bit>* input_bits) {
     }
 }
 
+/*
+ *  Performs a single modification to the output bytes, given an input byte.
+ *  Originally, it was intended to work after the input bytes have been read in, but I'm not sure it's necesary anymore
+ */
 byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
     if (gate_open) {
         // The GATE is open, so the feedback is active
