@@ -74,7 +74,7 @@ void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
         input_stream->push_back((byte) tape[i]);
     }
 
-    delete tape;
+    free(tape);
 
     fclose(f);
 }

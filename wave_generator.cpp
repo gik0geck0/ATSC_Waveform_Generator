@@ -72,6 +72,8 @@ int main() {
         vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
     }
 
+    delete mpeg_packets;
+
     // synchronize the fields
     printf("Syncing packets\n");
     syncMux(vsb8_packets);

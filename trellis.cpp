@@ -229,7 +229,9 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 	currentSymbol = NULL;
 	delete output;
 	output = NULL;
-	delete D1, D2, D3;
+	delete D1;
+    delete D2;
+    delete D3;
 	D1 = NULL; D2 = NULL; D3 = NULL;
 	//make sure the resulting bit stream is the right length, splurts out a warning if not, but will still return result
 	if(newBitStream->size() != RESULTING_BIT_STREAM_LENGTH){
