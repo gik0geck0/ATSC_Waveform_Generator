@@ -16,9 +16,11 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	vector<byte>* byteSteam;
 	vector< vector<bit>* >* bitPackage;
 
-	if(!((inputStream->size() % 188) == 0))
+    printf("Mod 188? %i\n", inputStream->size() % 188);
+	if(!((inputStream->size() % 188) == 0)) {
         printf("Input stream was of an invalid size\n");
 		exit(1);
+    }
 
 	numberOfPackets = inputStream->size() / 188;
 	bitPackage = new vector<vector<bit>*>();
@@ -34,7 +36,6 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	}
 	byteSteam = NULL;
 	
-    printf("Deleting old input stream\n");
 	delete inputStream;
 	inputStream = NULL;
 	return bitPackage;
@@ -55,6 +56,8 @@ void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
         }
     }
 
+    delete tape;
+
     fclose(f);
 }
 
@@ -70,6 +73,8 @@ void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
     for (int i=0; i < filelen; i++) {
         input_stream->push_back((byte) tape[i]);
     }
+
+    free(tape);
 
     fclose(f);
 }
