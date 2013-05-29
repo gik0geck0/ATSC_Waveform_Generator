@@ -4,6 +4,11 @@
 #include <iostream>
 using namespace std;
 
+/*
+  Type defs are for making the flow of the program make more sense in the prespective of the standard. It does not encompass all types, 
+  ie. a segment is a vector<int8_t>*, but make pn511 does not return a segment as defined by the ATSC standard, so it returns a vector<int8_t>*, not a segment*. makeNewField will however make a segment in terms of the ATSC standard, and will return a segment*, not a vector<int8_t>*
+*/
+
 typedef vector<int8_t> segment; // this is a complete, encoded transport stream after going through everyting up to the sync
 typedef vector<segment*> dataFrame; //this is a completed dataframe with syncs. 
 typedef bool bit;
@@ -11,7 +16,7 @@ typedef bool bit;
 /*
  This function is the Master function call. Calling this function will return a data frame as defined by the ATSC A/53 Standard page 10 figure 5.2 
  
- Precondition: a vector containg 624, 828 symbol segments is provided
+ Precondition: a vector containg any number of 828 symbol segments is provided
  Postcondition: a pointer to a vector containing segment pointers is returned with field syncs inserted before proper segments and segment syncs prepended to every segment. 
 */
 dataFrame* syncMux(vector<segment*>* dataSegments);
@@ -35,9 +40,9 @@ vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum);
 
 
 /*
-  This function will return a vector of length 12 that contains the last 12 symbols of the previous segment
+  This function will return a vector of length 12 that contains the last 12 symbols of the segment pointer provided
 
-  Precondition: lastSegment is valid or NULL
+  Precondition: lastSegment is valid
   Postcondition: only the last 12 symbols of lastSegment are returned. 
 */
 vector<int8_t>* getLast12Symbols(segment* lastSegment);
@@ -54,24 +59,27 @@ vector<int8_t>* assignModeFlag();
 /*
   This function is simply to abstract away all the function calls associated in making a field sync
 
-  Precondition: Pointer to last segment has at least 12 symbols or the pointer is NULL
+  Precondition: Pointer to last segment has at least 12 symbols
   Postcondition: Pointer to field sync is returned
 */
 segment* makeNewField(int fieldSyncNum, segment* lastSegment);
 
 /*
-  This function will prepend the segment sync of 5 -5 -5 5 to a particular segment and return a pointer to the segment with the segment sync prepended to it
+  This function will prepend the segment sync of 5 -5 -5 5 to a particular segment and modify the segment to prepend the segment sync to it
 
   Precondition: None
-  Postcondition: Orginal segment returned with segment sync prepended
+  Postcondition: Orginal segment modified with segment sync prepended
 */
 void segSync(segment* seg);
 
 
 vector<int8_t>* pn511(){
+	//intiliation
 	vector<int8_t>* sequence = new vector<int8_t>;
 	bit x9(0), x8(1), x7(0), x6(0), x5(0), x4(0), x3(0), x2(0), x1(0);
 	bit temp;
+	
+	//The implementation of the PN511 sequence as defined by the ATSC A/53 part 2 standard
 	for(int i = 0; i < 511; i++){
 		if(x1)
 			sequence->push_back(5);
@@ -99,9 +107,12 @@ vector<int8_t>* pn511(){
 
 
 vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum){
+	//intiliazation
 	vector<int8_t>* sequence = new vector<int8_t>;
 	bit x6(1), x5(0), x4(0), x3(1), x2(1), x1(1);
 	bit temp;
+
+	//Implementation of the PN63 sequence as defined by the ATSC A/53 part 2 standard. Note that on every other field sync, the middle pn63 block will be inverted. 
 	for(int i = 0; i < length; i++){
 		if(currentFieldSyncNum % 2 == 0){ // if im an even field sync
 			if(blockNum == 2){ // if im the block that might be invereted
@@ -133,11 +144,15 @@ vector<int8_t>* pn63(int length, int currentFieldSyncNum, int blockNum){
 		x5 = x6;
 		x6 = temp;
 	}
+
 	return sequence;
 }
 
 vector<int8_t>* assignModeFlag(){
+	//intilization
 	vector<int8_t>* mode = new vector<int8_t>;
+	
+	//this sequence is defined by the ATSC A/53 part 2. It is the same for every 8VSB trellis encoded wave.
 	mode->push_back(-5);
 	mode->push_back(-5);
 	mode->push_back(-5);
@@ -167,29 +182,38 @@ vector<int8_t>* assignModeFlag(){
 	mode->push_back(-5);
 	mode->push_back(5);
 	mode->push_back(-5);
+
 	return mode;
 }
 
 segment* makeNewField(int fieldSyncNum, segment* lastSegment){
+	//initilization
 	vector<int8_t>* fieldSync = new vector<int8_t>;
 	vector<int8_t>* mode = assignModeFlag();
 	vector<int8_t>* pn511Block = pn511();
-	vector<int8_t>* pn63Block;
+	vector<int8_t>* pn63Block; // will be created later, due to need to iterate
 	vector<int8_t>* last12Symbols = getLast12Symbols(lastSegment);
+	
+	//checks to see that the sequence generated is right length
 	if(pn511Block->size() != 511){
 		cout << "In function makeNewField: pn511Block is not correct size\nExpected 511\nGot " << pn511Block->size() << "\nABORTING";
 		exit(1);
 	}
+
 	fieldSync->insert(fieldSync->end(), pn511Block->begin(), pn511Block->end()); //append the pn511Block to field sync
+
+	//make the pn63 blocks
 	for(int i = 0; i < 3; i++){
-		pn63Block = pn63(63, fieldSyncNum, i+1);
+		pn63Block = pn63(63, fieldSyncNum, i+1); 
+		//checks to see that sequence generates is right length
 		if(pn63Block->size() != 63){
 			cout << "In function makeNewField: pn63Block number " << i+1 << " was not correct size\nExpected 63\nGot " << pn63Block->size() << "\nABORTING";
 			exit(1);
 		}
 		fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end());//append the pn63Block to field sync
-		delete pn63Block;
+		delete pn63Block; // free up iterative memory
 	}
+
 	fieldSync->insert(fieldSync->end(), mode->begin(), mode->end());//append the mode block to field sync
 	pn63Block = pn63(92, fieldSyncNum, 4);// can use any block num, but use 4 just for good measure
 	fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end()); // insert the 92 length pn63 block;

@@ -191,19 +191,29 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 		D3->push_back(0);
 	}
 	for(int i = 0; i < bitStream->size()/2; i++){ //iterate by symbol(which is currently 2 bits)
+		//get the current 2 bit symbol from bit stream
 		currentSymbol = getSymbol(bitStream, symbolCounter);
+		
+		//generate output bits
 		differentialEncoder(currentSymbol, D1, symbolCounter);
 		output = convolutionEncoder(currentSymbol, D2, D3, symbolCounter);
+
+		//push output bits onto new bit stream
 		newBitStream->push_back(output->z2);
 		newBitStream->push_back(output->z1);
 		newBitStream->push_back(output->z0);
+
+		//increment the symbol counter
 		symbolCounter++;
+
 		//free up memory, pointers will be reassigned
 		delete output;
 		delete currentSymbol;
+
 		//just for good coding practice, removing any dangling pointerss. 
 		output=NULL; 
 		currentSymbol=NULL;
+
 		//debug block
 		/*
 		if(symbolCounter %12 == 0){
@@ -231,10 +241,12 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 	output = NULL;
 	delete D1, D2, D3;
 	D1 = NULL; D2 = NULL; D3 = NULL;
+
 	//make sure the resulting bit stream is the right length, splurts out a warning if not, but will still return result
 	if(newBitStream->size() != RESULTING_BIT_STREAM_LENGTH){
 		cout << "In function trellisEncoder: Unexpected resulting bit stream length\nExpected " << RESULTING_BIT_STREAM_LENGTH << "\nGot " << newBitStream->size()<< endl;
 	}
+
 	delete bitStream; //remove old data
 	bitStream = newBitStream; //reassign pointers
 	vector<int8_t>* levels; // the returned pointer of vectors
@@ -248,11 +260,15 @@ outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int 
 	outputBits* output = new outputBits;
 	output->z2 = y->ms;//most sig bit is unaffected
 	output->z1 = y->ls;//z1 bit has no funny operation
+
+	//convolution implementation as defined by the ATSC A/53 part 2 standard
 	bit temp = (*D2)[symbolCounter%12] ^ y->ls;
 	bit z = (*D3)[symbolCounter%12];
 	(*D3)[symbolCounter%12] = temp;
 	(*D2)[symbolCounter%12] = z;
 	output->z0 = z;
+
+	return output;
 }
 
 symbol* getSymbol(vector<bit>* bitStream, int symbolCounter){
@@ -264,8 +280,11 @@ symbol* getSymbol(vector<bit>* bitStream, int symbolCounter){
 
 void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 	bit outputBit;
+
+	//differential encoder (aka precoder) as defined by the ATSC A/53 part 2 standard
 	outputBit = x->ms ^ (*D1)[symbolCounter % SYMBOL_DELAY];
 	(*D1)[symbolCounter % SYMBOL_DELAY] = outputBit;
+
 	x->ms = outputBit;
 }
 
@@ -275,9 +294,10 @@ void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream){
 	if(bitStream->size() % 3 != 0){//check for size of stream, make sure its valid
-		cout << "In function bitsToLevel: Requires a bitstream lenght that is a multiple of three\nABORTING" << endl;
+		cout << "In function bitsToLevel: Requires a bitstream length that is a multiple of three\nABORTING" << endl;
 		exit(1);
 	}
+
 	vector<int8_t>* voltageLevels = new vector<int8_t>;
 	for(int i = 0; i < bitStream->size()/3; i++){ // iterate by every symbol(which is now 3 bits long)
 		int level = 7; //voltage is defaulted to 7 or 111, will subtract as needed
