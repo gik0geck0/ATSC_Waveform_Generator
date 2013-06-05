@@ -13,6 +13,18 @@
 #include "sync.cpp"
 #include "trellis.cpp"
 
+#ifdef OS_WINDOWS // for windows systems
+   void remove()
+   {
+    system("del temp.ts");
+   }
+#else // for linux systems
+  void remove()
+   {
+    system("rm temp.ts");
+   }
+#endif
+
 typedef bool bit;
 typedef uint8_t byte;
 
@@ -22,14 +34,16 @@ void read_mpeg(std::vector<byte>* input_stream);
 
 int main() {
 
-    char* file = "tmp/kittens.mpg";
-
+    char* file = "temp.ts";
+    system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
+    
     // read in MPEG
     std::vector<byte>* mpeg_stream = new vector<byte>();
 
     printf("Reading in file\n");
     read_in_bytes(file, mpeg_stream);
 
+    remove(); // removes the temp transport stream 
 
     // Prints out every 188th byte. It should be 0x47
     /*
