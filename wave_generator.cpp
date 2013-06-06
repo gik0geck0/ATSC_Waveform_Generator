@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <vector>
 
+#include "agilent_wave_interface.cpp"
 #include "data_interleaver.cpp"
 #include "data_randomize.cpp"
 #include "mpeg2_sync_removal.cpp"
@@ -55,20 +56,20 @@ int main() {
     for ( int i=0; i < mpeg_packets->size(); i++) {
 
         // randomize the 187 bytes
-        printf("Randomizing packet %i\n", i);
+        //printf("Randomizing packet %i\n", i);
         data_randomize(mpeg_packets->at(i));
 
         // create the 20 byte reed solomon pairities
-        printf("Adding parity to packet %i\n", i);
+        //printf("Adding parity to packet %i\n", i);
         add_reed_solomon_parity(mpeg_packets->at(i));
 
 
         // Mix up the bits with interleaving
-        printf("Interleaving packet %i\n", i);
+        //printf("Interleaving packet %i\n", i);
         mpeg_packets->at(i) = data_interleaving(mpeg_packets->at(i));
 
         // use trellis encoding to go from symbols to 8-VSB levels
-        printf("Trellis Encoding packet %i\n", i);
+        //printf("Trellis Encoding packet %i\n", i);
         vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
     }
 
@@ -83,6 +84,10 @@ int main() {
     vector<vector<float>*>* vsb8_signal = pilot_insertion(vsb8_packets);
 
     // Send to Wave-form generator
+    std::vector<int16_t>* as_int16 = convert_to_16bit_int(vsb8_signal);
+    printf("Number of ints: %i\n", as_int16->size());
+
+    send_data_to_generator(as_int16);
     
     // Cleanup
     for (int i=0; i < vsb8_signal->size(); i++) {
