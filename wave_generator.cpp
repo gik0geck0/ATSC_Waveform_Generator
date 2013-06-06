@@ -14,6 +14,18 @@
 #include "sync.cpp"
 #include "trellis.cpp"
 
+#ifdef OS_WINDOWS // for windows systems
+   void remove()
+   {
+    system("del temp.ts");
+   }
+#else // for linux systems
+  void remove()
+   {
+    system("rm temp.ts");
+   }
+#endif
+
 typedef bool bit;
 typedef uint8_t byte;
 
@@ -23,14 +35,16 @@ void read_mpeg(std::vector<byte>* input_stream);
 
 int main() {
 
-    char* file = "tmp/kittens.mpg";
-
+    char* file = "temp.ts";
+    system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
+    
     // read in MPEG
     std::vector<byte>* mpeg_stream = new vector<byte>();
 
     printf("Reading in file\n");
     read_in_bytes(file, mpeg_stream);
 
+    remove(); // removes the temp transport stream 
 
     // Prints out every 188th byte. It should be 0x47
     /*
@@ -56,20 +70,20 @@ int main() {
     for ( int i=0; i < mpeg_packets->size(); i++) {
 
         // randomize the 187 bytes
-        //printf("Randomizing packet %i\n", i);
+        printf("Randomizing packet %i\n", i);
         data_randomize(mpeg_packets->at(i));
 
         // create the 20 byte reed solomon pairities
-        //printf("Adding parity to packet %i\n", i);
+        printf("Adding parity to packet %i\n", i);
         add_reed_solomon_parity(mpeg_packets->at(i));
 
 
         // Mix up the bits with interleaving
-        //printf("Interleaving packet %i\n", i);
+        printf("Interleaving packet %i\n", i);
         mpeg_packets->at(i) = data_interleaving(mpeg_packets->at(i));
 
         // use trellis encoding to go from symbols to 8-VSB levels
-        //printf("Trellis Encoding packet %i\n", i);
+        printf("Trellis Encoding packet %i\n", i);
         vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
     }
 
