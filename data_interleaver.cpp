@@ -16,11 +16,13 @@ typedef bool bit;
 typedef uint8_t byte;
 using namespace std;
 
+static const int BYTES_PER_SEGMENT_FEC = 207;
+
 vector<bit>* data_interleaving(vector<bit> *bitStream)
 // WARNING: this function delets bitStream and returns a new interleaved bit Stream
 {
 	int i,j;
-	int bytestreamSize = 207;
+	int bytestreamSize = BYTES_PER_SEGMENT_FEC;
 	vector<bit> *interleavedBits;
 	vector<byte> *byteStream;
 	byte convolutionalInterleaver[52][4];
@@ -30,12 +32,12 @@ vector<bit>* data_interleaving(vector<bit> *bitStream)
 	delete bitStream;
 	bitStream = NULL;
 	
-	if(byteStream->size() != 207)
+	if(byteStream->size() != BYTES_PER_SEGMENT_FEC)
 	{
 		printf("Byte Stream is %i long and not 207 bytes long.\n", (int)byteStream->size());
 	}
 	//interleave the bytes
-	for(i = 0; i < 207; i++)
+	for(i = 0; i < BYTES_PER_SEGMENT_FEC; i++)
 	{
 		convolutionalInterleaver[i % 52][i/52] = byteStream->at(i);
 	}
@@ -44,7 +46,7 @@ vector<bit>* data_interleaving(vector<bit> *bitStream)
 
 	// new byte stream to pull data form the interleaver
 	byteStream = new vector<byte>();
-	for(i = 0; i < 207; i++)
+	for(i = 0; i < BYTES_PER_SEGMENT_FEC; i++)
 			byteStream->push_back(convolutionalInterleaver[i/4][i%4]);
 	// make bit stream
 	interleavedBits = makeBitsFromBytes(byteStream);

@@ -17,7 +17,7 @@ using namespace std;
 
 int main(void)
 {
-	system("ffmpeg -i image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
+	system("../../../ffmpeg/ffmpeg -i image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
 
 	remove();
 	return 0;
