@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
+#include <set>
 #include <vector>
 
 #include "agilent_wave_interface.cpp"
@@ -29,13 +30,14 @@
 typedef bool bit;
 typedef uint8_t byte;
 
+void verify_data(std::vector<int16_t>* data);
 void read_in_file(char* file_name, std::vector<bit>* input_stream);
 void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
 void read_mpeg(std::vector<byte>* input_stream);
 
 int main() {
 
-    char* file = "temp.ts";
+    char* file = "tmp/kittens.mpg";
     system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
     
     // read in MPEG
@@ -70,20 +72,20 @@ int main() {
     for ( int i=0; i < mpeg_packets->size(); i++) {
 
         // randomize the 187 bytes
-        printf("Randomizing packet %i\n", i);
+        //printf("Randomizing packet %i\n", i);
         data_randomize(mpeg_packets->at(i));
 
         // create the 20 byte reed solomon pairities
-        printf("Adding parity to packet %i\n", i);
+        //printf("Adding parity to packet %i\n", i);
         add_reed_solomon_parity(mpeg_packets->at(i));
 
 
         // Mix up the bits with interleaving
-        printf("Interleaving packet %i\n", i);
+        //printf("Interleaving packet %i\n", i);
         mpeg_packets->at(i) = data_interleaving(mpeg_packets->at(i));
 
         // use trellis encoding to go from symbols to 8-VSB levels
-        printf("Trellis Encoding packet %i\n", i);
+        //printf("Trellis Encoding packet %i\n", i);
         vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
     }
 
@@ -101,6 +103,7 @@ int main() {
     std::vector<int16_t>* as_int16 = convert_to_16bit_int(vsb8_signal);
     printf("Number of ints: %i\n", as_int16->size());
 
+    verify_data(as_int16);
     send_data_to_generator(as_int16);
     
     // Cleanup
@@ -108,4 +111,16 @@ int main() {
         delete vsb8_signal->at(i);
     }
     delete vsb8_signal;
+}
+
+void verify_data(std::vector<int16_t>* data) {
+    std::set<int16_t> my_set;
+    for ( int i=0; i < data->size(); i++) {
+        my_set.insert(data->at(i));
+    }
+
+    printf("Distinct levels: %i\n", my_set.size());
+    for ( std::set<int16_t>::iterator iter = my_set.begin(); iter != my_set.end(); iter++) {
+        printf("In set: %i\n", *iter);
+    }
 }

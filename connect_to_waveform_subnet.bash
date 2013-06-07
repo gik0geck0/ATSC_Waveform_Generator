@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ -z "$!" ]
+if [ -z "$1" ]
 then
-    "Usage: connect <interface>"
+    echo "Usage: connect <interface>"
     exit
 fi
 

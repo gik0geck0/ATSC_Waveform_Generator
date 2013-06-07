@@ -26,12 +26,21 @@ std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* dat
     
     for (int i=0; i < data_segments->size(); i++) {
         for (int j=0; j < data_segments->at(i)->size(); j++) {
-            signal_map->push_back((int16_t)(data_segments->at(i)->at(j)*(32767.0/5.75)));
+            signal_map->push_back((int16_t)((data_segments->at(i)->at(j)-1.25)*(32767.0/7)));
         }
     }
 
     return signal_map;
 }
+
+char* custom_strdup(const char* input_string, int nchar) {
+    char *dup = (char*) malloc(sizeof(char)*nchar);
+    if (dup == NULL)
+        return NULL;
+    memcpy (dup, input_string, nchar);
+    return dup;
+}
+
 
 // sockets.c
 // Demonstrates basic instrument control through TCP
@@ -49,7 +58,6 @@ std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* dat
 // 
 // The GNU General Public License is available at
 // http://www.gnu.org/copyleft/gpl.html.
-
 int WriteString(int MySocket,char string[], int size)
 {
 	int retval;
@@ -60,6 +68,10 @@ int WriteString(int MySocket,char string[], int size)
 		exit(1);
 	}
 	return retval;
+}
+
+int WriteString(int MySocket,char string[]) {
+    WriteString(MySocket, string, strlen(string));
 }
 
 int WaitForData(int MySocket)
@@ -105,6 +117,17 @@ int ReadString(int MySocket,char *buffer)
       	buffer[actual]=0;
 	}
 	return actual;
+}
+
+void ReadoutErrors(int MySocket) {
+	char* SocketsBuffer = (char*) calloc(SOCKETS_BUFFER_SIZE, sizeof(char));
+
+    while ( strcmp(SocketsBuffer, "+0,\"No error\"\n")!=0 ) {
+        WriteString(MySocket, "SYST:ERR?\n");
+        ReadString(MySocket, SocketsBuffer);
+        printf("Any errors? %s\n", SocketsBuffer);
+    }
+
 }
 
 void DeviceClear(int MySocket,char *buffer)
@@ -153,7 +176,11 @@ int send_data_to_generator(std::vector<int16_t>* integer_data) {
 	int retval;
     std::stringstream data_str_builder;
     char* data_pointer;
-    char data_as_chars[];
+    //char* data_as_chars;
+    int num_chars;
+    char* str_num_chars;
+    int length_num_chars;
+    int data_arb_header_length;
 	
 	// Create socket (allocate resources)
 	if((MySocket=socket(
@@ -230,23 +257,141 @@ int send_data_to_generator(std::vector<int16_t>* integer_data) {
 	
 	// Do a device clear
 	DeviceClear(MyControlPort,SocketsBuffer);
-
-    data_as_chars = malloc(sizeof(char)*integer_data->size()*2);
+    num_chars = integer_data->size()*2;
+    //num_chars = 99999;
+    //num_chars = 100000;
+    //= (void*) malloc((integer_data->size()*2+1)*sizeof(char));
+    //data_as_chars = (char*) calloc(num_chars, sizeof(char));
+    
     data_pointer = ((char*) ((void*) integer_data));
-    data_str_builder << "DATA:ARB:DAC atsc_wave,";
-    for (int i=0; i < integer_data->size()*2; i++) {
-        data_str_builder << data_pointer[i];
+
+    str_num_chars = (char*) calloc(10, sizeof(char));
+    length_num_chars = sprintf(str_num_chars, "%i", num_chars);
+    printf("Number of chars: %s. Length of that as a string: %i\n", str_num_chars, length_num_chars);
+    if (length_num_chars > 9 ) {
+        printf("Having more than 9 characters reprsenting the number of bytes is unsupported.\n");
+        exit(1);
+    }
+    
+    //data_str_builder << "DATA:ARB:DAC atsc_wave,500,400,368,336,304,272,257,496,32767,-32767\n";
+    data_str_builder << "DATA:ARB:DAC atsc_wave,#";
+    data_str_builder << length_num_chars;
+    data_str_builder << str_num_chars;
+    data_arb_header_length = data_str_builder.str().length();
+    printf("Header '%s' has a length: %i\n", data_str_builder.str().c_str(), data_arb_header_length);
+
+    /*
+    //data_str_builder << "220";
+
+    // 500
+    for (int i=0; i < 100000; i++) {
+        // 32767
+        data_str_builder << (char) 0x7F;
+        data_str_builder << (char) 0xFF;
+
+        // -32767
+        data_str_builder << (char) 0x80;
+        data_str_builder << (char) 0x01;
     }
 
-    printf("Making the wave as:\n");
-    printf("%s\n", data_str_builder.str().c_str());
-	
-    //WriteString(MySocket, "DATA:ARB:DAC atsc_wave,500,600,1000,12000,-8000,9000,-20000,30000\n");
-    WriteString(MySocket, strdup(data_str_builder.str().c_str()));
-    WriteString(MySocket, "FUNC ARB\n");
-    WriteString(MySocket, "FUNC:ARB:FILTER OFF\n");
+    // 400
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x90;
 
-    WriteString(MySocket, "FUNC:ARB atsc_wave\n");
+    // 368
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x70;
+
+    // 336
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x50;
+
+    // 304
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x30;
+
+    // 272
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x10;
+
+    // 257
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0x01;
+
+    // 496
+    data_str_builder << (char) 0x01;
+    data_str_builder << (char) 0xF0;
+
+    // 32767
+    data_str_builder << (char) 0x7F;
+    data_str_builder << (char) 0xFF;
+
+    // -32767
+    data_str_builder << (char) 0x80;
+    data_str_builder << (char) 0x01;
+
+    data_str_builder << '\n';
+    */
+
+    for (int i=0; i < num_chars; i++) {
+        if (i >= 99999 && i <= 100002) {
+            printf("Byte %i: %i\n", i, (int) data_pointer[i]);
+            //printf("Int val: %i\n, 
+        }
+        data_str_builder << data_pointer[i];
+    }
+    data_str_builder << '\n';
+
+    //printf("Last char in string: %c\n", data_str_builder.str().c_str()[num_chars]);
+    printf("Using the wave string:\n");
+    //printf("%s\n", data_str_builder.str().c_str());
+	
+    // Initial wave setup
+    //WriteString(MySocket, "DATA:ARB:DAC atsc_wave,500,600,1000,12000,-8000,9000,-20000,30000\n");
+    
+    // Frequency range setup
+    
+
+
+    printf("Reading function related errors\n");
+    ReadoutErrors(MySocket);
+
+    // Voltage range setup
+    //WriteString(MySocket, "VOLT:UNIT VPP\n");
+    //WriteString(MySocket, "VOLT 1.0 Vpp\n");
+    //WriteString(MySocket, "VOLT:OFFS 0.0\n");
+
+    //WriteString(MySocket, "VOLT:LOW 0.0\n");
+    //WriteString(MySocket, "VOLT:HIGH 1.0\n");
+
+    //WriteString(MySocket, "VOLT:LIM:LOW 0.0\n");
+    //WriteString(MySocket, "VOLT:LIM:HIGH 1.0\n");
+
+    //WriteString(MySocket, "VOLT:LIM:STAT ON\n");
+
+    // Function and data setup
+    //WriteString(MySocket, "FORM:BORD SWAP\n");
+    //WriteString(MySocket, "FUNC:ARB:PTP 1.0045\n");
+    //WriteString(MySocket, "FUNC ARB\n");
+    //WriteString(MySocket, "FUNC:ARB:FILTER OFF\n");
+
+    printf("Reading errors after setting voltages\n");
+    ReadoutErrors(MySocket);
+
+    // upload the wave, and set to display it
+    printf("Total bytes to write to socket: %i\n", num_chars+data_arb_header_length+1);
+
+    //WriteString(MySocket, custom_strdup(data_str_builder.str().c_str(), num_chars+data_arb_header_length+1), num_chars+data_arb_header_length+1);
+    /*WriteString(MySocket, custom_strdup(data_str_builder.str().c_str(), 400000 + 32), 400000 + 32);*/
+
+    //WriteString(MySocket, "FUNC:ARB atsc_wave\n");
+
+    printf("Reading errors related to uploading the waveform\n");
+    ReadoutErrors(MySocket);
+
+
+    //
+    // Show the wave
     //WriteString(MySocket, "OUTP ON\n");
     //WriteString(MySocket, "SYST:ERR?\n");
     //ReadString(MySocket, SocketsBuffer);
@@ -262,11 +407,6 @@ int send_data_to_generator(std::vector<int16_t>* integer_data) {
     printf("'%s'\n", "+0,\"No Error\"\n");
     */
 
-    while ( strcmp(SocketsBuffer, "+0,\"No error\"\n")!=0 ) {
-        WriteString(MySocket, "SYST:ERR?\n");
-        ReadString(MySocket, SocketsBuffer);
-        printf("Any errors? %s\n", SocketsBuffer);
-    }
 
     /*
 	// Demonstrate SRQ... First, tell the instrument when to generate an SRQ
