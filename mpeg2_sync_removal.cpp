@@ -9,6 +9,8 @@ using namespace std;
 typedef bool bit;
 typedef uint8_t byte;
 
+static const int TS_SIZE = 188;
+
 vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 {
 	// This function will delete the inputSteam
@@ -16,20 +18,20 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	vector<byte>* byteSteam;
 	vector< vector<bit>* >* bitPackage;
 
-    printf("Mod 188? %i\n", inputStream->size() % 188);
-	if(!((inputStream->size() % 188) == 0)) {
+    printf("Mod 188? %i\n", inputStream->size() % TS_SIZE);
+	if(!((inputStream->size() % TS_SIZE) == 0)) {
         printf("Input stream was of an invalid size\n");
 		exit(1);
     }
 
-	numberOfPackets = inputStream->size() / 188;
+	numberOfPackets = inputStream->size() / TS_SIZE;
 	bitPackage = new vector<vector<bit>*>();
 	for(i = 0; i < numberOfPackets; i++)
 	{
 		byteSteam = new vector<byte>();
-		for(j = 1; j < 188; j++)
+		for(j = 1; j < TS_SIZE; j++)
 		{
-			byteSteam->push_back(inputStream->at(i*188+j));
+			byteSteam->push_back(inputStream->at(i*TS_SIZE+j));
 		}
 		bitPackage->push_back(makeBitsFromBytes(byteSteam));
 		delete byteSteam;

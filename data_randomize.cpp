@@ -2,9 +2,9 @@
 // This fuction changes the bits in the vector
 // The MSB is vector.at(0)
 
+static const int BYTE_SIZE = 8;
 
-
-/*#include <vector>
+#include <vector>
 #include <stdio.h>
 typedef bool bit;
 using namespace std;
@@ -19,7 +19,7 @@ int data_randomize(vector<bit>* mpeg_frame);
 
 // output:
 // 10101011001100011100000000100111
-
+/*
 int main()
 {
 	vector<bit> testBit;
@@ -76,6 +76,7 @@ int main()
 	return 0;
 }
 */
+
 int data_randomize(vector<bit> *mpeg_frame)
 {
 	int i;
@@ -99,13 +100,13 @@ int data_randomize(vector<bit> *mpeg_frame)
 	fixedRandomizingBytes[7] = polynomial[14-1];
 
 	// check to see if the mpg_frame is disible by 8
-	if((mpeg_frame->size() % 8) != 0)
+	if((mpeg_frame->size() % BYTE_SIZE) != 0)
 	{
 		printf("Bit stream not disible by 8\n");
 		return 1;
 	}
 	
-	for(i = 0; i < mpeg_frame->size(); i += 8)
+	for(i = 0; i < mpeg_frame->size(); i += BYTE_SIZE)
 	{
 		// XOR bytes
 		(*mpeg_frame)[i] 	 = (*mpeg_frame)[i] 	^ fixedRandomizingBytes[7];

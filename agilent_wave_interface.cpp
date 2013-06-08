@@ -165,7 +165,7 @@ void SetNODELAY(int MySocket)
 
 int send_data_to_generator(std::vector<int16_t>* integer_data) {
     if (integer_data->size() > 16000000) {
-        printf("Yo dawg. Whatcha doin? You're givin me way more ints than I can handle! I got %i, but I can only take \n", integer_data->size(), 16000000);
+        printf("Yo dawg. Whatcha doin? You're givin me way more ints than I can handle! I got %i, but I can only take %i\n", integer_data->size(), 16000000);
         exit(1);
     }
 

@@ -10,6 +10,8 @@ typedef bool bit;
 const static int SYMBOL_DELAY = 12; // 12 symbol delay in trellis encoding
 const static int BIT_STREAM_LENGTH = 1656; // number of bits in 207 bytes (187 from transport stream + 20 Reed solomon)
 const static int RESULTING_BIT_STREAM_LENGTH = 2484;//number of bits that the resulting bit stream should have(1656 * 3/2)
+const static int BITS_PER_VOLT = 3;
+const static int BITS_PER_SYMBOL = 2;
 
 /*
  A symbol is defined as 2 bits by ATSC standard before trellis encoding
@@ -168,7 +170,7 @@ int main(){
 
 vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 	//check for a valid bitStream size
-	if(bitStream->size()%2){
+	if(bitStream->size()%BITS_PER_SYMBOL){
 		cout << "In function trellisEncoder: Not given a bit stream whose length is a multiple of 2.\nGiven bit stream length is " << bitStream->size() << "\nAborting" << endl;
 		exit(1);
 	}
@@ -190,7 +192,7 @@ vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
 		D2->push_back(0);
 		D3->push_back(0);
 	}
-	for(int i = 0; i < bitStream->size()/2; i++){ //iterate by symbol(which is currently 2 bits)
+	for(int i = 0; i < bitStream->size()/BITS_PER_SYMBOL; i++){ //iterate by symbol(which is currently 2 bits)
 		//get the current 2 bit symbol from bit stream
 		currentSymbol = getSymbol(bitStream, symbolCounter);
 		
@@ -295,15 +297,15 @@ void differentialEncoder(symbol* x, vector<bit>* D1, int symbolCounter){
 
 
 vector<int8_t>* bitsToLevel(vector<bit>* bitStream){
-	if(bitStream->size() % 3 != 0){//check for size of stream, make sure its valid
+	if(bitStream->size() % BITS_PER_VOLT != 0){//check for size of stream, make sure its valid
 		cout << "In function bitsToLevel: Requires a bitstream length that is a multiple of three\nABORTING" << endl;
 		exit(1);
 	}
 
 	vector<int8_t>* voltageLevels = new vector<int8_t>;
-	for(int i = 0; i < bitStream->size()/3; i++){ // iterate by every symbol(which is now 3 bits long)
+	for(int i = 0; i < bitStream->size()/BITS_PER_VOLT; i++){ // iterate by every symbol(which is now 3 bits long)
 		int level = 7; //voltage is defaulted to 7 or 111, will subtract as needed
-		for(int j = 0; j < 3; j++){
+		for(int j = 0; j < BITS_PER_VOLT; j++){
 			if(j == 0){ // most sig bit
 				if((*bitStream)[i*3+j] == false)
 					level -= 8;

@@ -13,6 +13,17 @@ typedef vector<int8_t> segment; // this is a complete, encoded transport stream 
 typedef vector<segment*> dataFrame; //this is a completed dataframe with syncs. 
 typedef bool bit;
 
+
+/*
+  Constants, these numbers have specific meanings and too increase readablity of code, have been defined.
+*/
+static const int PN511_BLOCK_SIZE = 511;
+static const int PN63_STANDARD_BLOCK_SIZE = 63;
+static const int PN63_RESERVED_BLOCK_SIZE = 92;
+static const int NUMBER_SEGMENTS_BEFORE_FIELD = 312;
+static const int NUMBER_SEGMENTS_AFTER_FIELD = 313;
+static const int SYMBOLS_PER_SEGMENT_BEFORE_SYNC = 828;
+
 /*
  This function is the Master function call. Calling this function will return a data frame as defined by the ATSC A/53 Standard page 10 figure 5.2 
  
@@ -80,7 +91,7 @@ vector<int8_t>* pn511(){
 	bit temp;
 	
 	//The implementation of the PN511 sequence as defined by the ATSC A/53 part 2 standard
-	for(int i = 0; i < 511; i++){
+	for(int i = 0; i < PN511_BLOCK_SIZE; i++){
 		if(x1)
 			sequence->push_back(5);
 		else
@@ -195,7 +206,7 @@ segment* makeNewField(int fieldSyncNum, segment* lastSegment){
 	vector<int8_t>* last12Symbols = getLast12Symbols(lastSegment);
 	
 	//checks to see that the sequence generated is right length
-	if(pn511Block->size() != 511){
+	if(pn511Block->size() != PN511_BLOCK_SIZE){
 		cout << "In function makeNewField: pn511Block is not correct size\nExpected 511\nGot " << pn511Block->size() << "\nABORTING";
 		exit(1);
 	}
@@ -204,9 +215,9 @@ segment* makeNewField(int fieldSyncNum, segment* lastSegment){
 
 	//make the pn63 blocks
 	for(int i = 0; i < 3; i++){
-		pn63Block = pn63(63, fieldSyncNum, i+1); 
+		pn63Block = pn63(PN63_STANDARD_BLOCK_SIZE, fieldSyncNum, i+1); 
 		//checks to see that sequence generates is right length
-		if(pn63Block->size() != 63){
+		if(pn63Block->size() != PN63_STANDARD_BLOCK_SIZE){
 			cout << "In function makeNewField: pn63Block number " << i+1 << " was not correct size\nExpected 63\nGot " << pn63Block->size() << "\nABORTING";
 			exit(1);
 		}
@@ -215,7 +226,7 @@ segment* makeNewField(int fieldSyncNum, segment* lastSegment){
 	}
 
 	fieldSync->insert(fieldSync->end(), mode->begin(), mode->end());//append the mode block to field sync
-	pn63Block = pn63(92, fieldSyncNum, 4);// can use any block num, but use 4 just for good measure
+	pn63Block = pn63(PN63_RESERVED_BLOCK_SIZE, fieldSyncNum, 4);// can use any block num, but use 4 just for good measure
 	fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end()); // insert the 92 length pn63 block;
 	fieldSync->insert(fieldSync->end(), last12Symbols->begin(), last12Symbols->end()); //add last 12 symbols
 	//destructors
@@ -255,12 +266,12 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 	
 
 	for(int i = 0; i < dataSegments->size(); i++){//for each data segment
-		if(i%312 == 0 && i != 0){
+		if(i%NUMBER_SEGMENTS_BEFORE_FIELD == 0 && i != 0){
 			fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));//append field sync into vector
 			fieldSyncNum++; //may need to make another field sync
 			evenMult = true;	
 		}
-		else if(i%312 != 0){
+		else if(i%NUMBER_SEGMENTS_BEFORE_FIELD != 0){
 			evenMult = false;
 		}
 		lastSegment = (*dataSegments)[i];
@@ -272,13 +283,13 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 
 	int fieldToInsert=0; //the index of the field to insert from the vector fieldSyncs
 	for(int i = 0; i < dataSegments->size(); i++){
-		if(i%313 == 0){
+		if(i%NUMBER_SEGMENTS_AFTER_FIELD == 0){
 			dataSegments->insert(dataSegments->begin()+i, (*fieldSyncs)[fieldToInsert]);
 			fieldToInsert++;
 		}
 	}
 	for(int i = 0; i < dataSegments->size(); i++){
-		if((*dataSegments)[i]->size() != 828){
+		if((*dataSegments)[i]->size() != SYMBOLS_PER_SEGMENT_BEFORE_SYNC){
 			cout << "In function syncMux: Encountered unexpected size of segment before segment sync addon at index " << i << endl << "Expected 828\nGot " << (*dataSegments)[i]->size()<<endl;
 		}
 		segSync((*dataSegments)[i]);
