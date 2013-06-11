@@ -36,10 +36,9 @@ void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
 void read_mpeg(std::vector<byte>* input_stream);
 
 int main() {
-
     char* file = "tmp/kittens.mpg";
+   // char* file = "~/downloads/imp18.jpg";
     system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
-    
     // read in MPEG
     std::vector<byte>* mpeg_stream = new vector<byte>();
 
@@ -102,7 +101,7 @@ int main() {
     // Send to Wave-form generator
     std::vector<int16_t>* as_int16 = convert_to_16bit_int(vsb8_signal);
     printf("Number of ints: %i\n", as_int16->size());
-
+ 
     verify_data(as_int16);
     send_data_to_generator(as_int16);
     
