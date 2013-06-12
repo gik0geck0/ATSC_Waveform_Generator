@@ -275,7 +275,6 @@ int send_data_to_generator(std::vector<int16_t>* integer_data) {
         data_pointer[i*2+1] = (char) data_point & 0x00FF;
         //data_pointer[i*2+1] = data_pointer[i*2];
         //data_pointer[i*2] = data_pointer[i*2+1];
-        printf("At %i, Integer %i -> %i + %i\n", i, data_point, (int) data_pointer[i*2], (int) data_pointer[i*2+1]);
     }
 
     //((char*) ((void*) integer_data));
