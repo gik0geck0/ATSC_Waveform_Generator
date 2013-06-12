@@ -402,7 +402,7 @@ int send_data_to_generator(std::vector<int16_t>* integer_data) {
 
     WriteString(MySocket, "VOLT:LIM:STAT ON\n");
 
-    WriteString(MySocket, "FUNC:ARB:FREQ 10763260\n");
+    WriteString(MySocket, "FUNC:ARB:SRAT 10763260\n");
 
     printf("Reading errors after setting voltages\n");
     ReadoutErrors(MySocket);
