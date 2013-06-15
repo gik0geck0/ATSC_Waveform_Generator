@@ -29,6 +29,7 @@
 
 typedef bool bit;
 typedef uint8_t byte;
+typedef std::vector<vector<byte>*> field;
 
 void verify_data(std::vector<int16_t>* data);
 void read_in_file(char* file_name, std::vector<bit>* input_stream);
@@ -68,27 +69,35 @@ int main() {
 
     vector<vector<int8_t>*>* vsb8_packets = new vector<vector<int8_t>*>();
 
-    for ( int i=0; i < mpeg_packets->size(); i++) {
+    vector<byte>* fieldBytes = new vector<byte>; //holds all the bytes of a field
+    vector<vector<byte>*>* oneField = new vector<vector<byte>*>; // will hold at most 312 data segments
+    vector<vector<byte>*>* fieldAllBytes = new vector<vector<byte>*>;
+    vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>;; //holds the data fields
 
-        // randomize the 187 bytes
-        //printf("Randomizing packet %i\n", i);
-        data_randomize(mpeg_packets->at(i));
+	vector<byte>*tempBytes; //for temp step
 
-        // create the 20 byte reed solomon pairities
-        //printf("Adding parity to packet %i\n", i);
-        add_reed_solomon_parity(mpeg_packets->at(i));
+	for(int i=0; i < mpeg_packets; i++){
+		tempBytes = makeBytesFromBits(mpeg_packets->at(i)); //get the bytes
+		fieldBytes->insert(fieldBytes.end(), tempBytes->begin(), tempBytes->end();); //add bytes to stream
+		if(i !=0 && i%312 == 0){
+			fieldAllBytes->push_back(fieldBytes);
+			fieldBytes = new vector<byte>;
+		}
+	}	
+	if(fieldBytes->size() != 0){
+		fieldAllBytes->push_back(fieldBytes);
+	}
+	for(int i = 0; i < fieldAllBytes->size(); i++){
+		data_randomize(fieldAllBytes->at(i));
+		oneField = add_reed_solomon_parity(fieldAllBytes->at(i));
+		data_interleaving(oneField);
+		vsb8_packets->push_back(trellisEncoder(oneField));
+	}
 
 
-        // Mix up the bits with interleaving
-        //printf("Interleaving packet %i\n", i);
-        mpeg_packets->at(i) = data_interleaving(mpeg_packets->at(i));
-
-        // use trellis encoding to go from symbols to 8-VSB levels
-        //printf("Trellis Encoding packet %i\n", i);
-        vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
-    }
 
     delete mpeg_packets;
+    delete tempBytes;
 
     // synchronize the fields
     printf("Syncing packets\n");

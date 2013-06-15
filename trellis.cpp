@@ -125,9 +125,9 @@ vector<int8_t>* bitsToLevel(vector<bit>* bitStream);
 	Precondition:Bit steam is a multiple of 2
 	Postcondition:The bit stream is altered with the trellis encoding done.
 */
-vector<bit>* trellisEncoder(uint8_t byte, buffers* dSet, int byteCount);
+vector<bit>* master(uint8_t byte, buffers* dSet, int byteCount);
 
-vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field);
+vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field);
 
 //this main exists only for the purpose debuging. once the final product is finished this function will be deleted
 
@@ -144,7 +144,7 @@ int main(){
 		field->push_back(segment);
 		segment = new vector<uint8_t>;
 	}
-	answer= master(field);
+	answer= trellisEncoder(field);
 	for(int i = 0; i < answer->size(); i++){
 		if(answer->at(i)->size() != 828)
 			exit(1);
@@ -158,12 +158,13 @@ int main(){
 	for(std::set<int8_t>::iterator it = derp.begin(); it != derp.end(); it++){
 		cout << (int)(*it) << " ";
 	}
+	cout << answer->size();
 	return 0;
 }
 
 
 
-vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field){
+vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 	shouldBeTrue x = false;
 	vector<buffers*>* encoder = new vector<buffers*>;
 	vector<vector<uint8_t>*>* currentField;
@@ -199,7 +200,7 @@ vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field){
 			cout << "about to encode" << endl;
 			for(int k= 0; k < currentSegment->size(); k++){
 				cout << "k is now " << k << endl;
-				bits = trellisEncoder(currentSegment->at(k), encoder->at(k%12), k); //bits is an itermediate place holder
+				bits = master(currentSegment->at(k), encoder->at(k%12), k); //bits is an itermediate place holder
 				cout << "encoding is done for segment" << endl;
 				cout << "pushing bits onto segmentbits" << endl;
 				for(int n=0; n < bits->size(); n++){
@@ -209,7 +210,7 @@ vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field){
 		}
 		else if (segMod == 1){
 			for(int k = 0; k < currentSegment->size(); k++){
-				bits = trellisEncoder(currentSegment->at(k), encoder->at((k+4)%12), k);
+				bits = master(currentSegment->at(k), encoder->at((k+4)%12), k);
 				for(int n=0; n < bits->size(); n++){
 					segmentBits->push_back(bits->at(n));
 				}
@@ -218,7 +219,7 @@ vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field){
 		else{
 			for(int k = 0; k <currentSegment->size(); k++){
 				cout << "k is " << k << endl;
-				bits = trellisEncoder(currentSegment->at(k), encoder->at((k+8)%12),k);
+				bits = master(currentSegment->at(k), encoder->at((k+8)%12),k);
 				for(int n=0; n < bits->size(); n++){
 					segmentBits->push_back(bits->at(n));
 				}
@@ -237,7 +238,7 @@ vector<vector<int8_t>*>* master(vector<vector<uint8_t>*>* field){
 }
 
 
-vector<bit>* trellisEncoder(uint8_t byte, buffers* dSet, int byteCount){
+vector<bit>* master(uint8_t byte, buffers* dSet, int byteCount){
 	symbol* a; 
 	symbol*	b; 
 	symbol*	c; 
