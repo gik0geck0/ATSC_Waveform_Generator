@@ -11,7 +11,7 @@ uint8_t gmul(uint8_t a, uint8_t b);
 uint8_t gsub(uint8_t a, uint8_t b);
 uint8_t gadd(uint8_t a, uint8_t b);
 
-void add_reed_solomon_parity(std::vector<byte>* input_bytes);
+vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes);
 std::vector<std::vector<byte>*>* divide_into_segments(std::vector<byte>* field_bytes);
 byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open);
 
@@ -28,7 +28,7 @@ byte alphas[] = { 174, 165, 121, 121, 198, 228, 22, 187, 36, 69, 150, 112, 220, 
  *
  *  Input bytes will contain an entire data-field (312 segments) of bytes
  */
-void add_reed_solomon_parity(std::vector<byte>* input_bytes) {
+vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
 
     std::vector<std::vector<byte>*>* field_segments = divide_into_segments(input_bytes);
     delete input_bytes;
@@ -61,6 +61,8 @@ void add_reed_solomon_parity(std::vector<byte>* input_bytes) {
             field_segments->at(i)->push_back(outputs[j]);
         }
     }
+
+    return field_segments;
 }
 
 /*
