@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <iostream>
-#include "common.h"
+#include "common.cpp"
 typedef uint8_t byte;
 typedef bool bit;
 using namespace std;

@@ -15,10 +15,6 @@ vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes);
 std::vector<std::vector<byte>*>* divide_into_segments(std::vector<byte>* field_bytes);
 byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open);
 
-int main() {
-
-}
-
 // This is defined specifically for the ATSC standard
 byte alphas[] = { 174, 165, 121, 121, 198, 228, 22, 187, 36, 69, 150, 112, 220, 6, 99, 111, 5, 240, 186, 152, 1 };
 
@@ -39,8 +35,8 @@ vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
         // The FIRST element is what's stored in the GATE
         // index = power of X
         byte outputs[21];
-        for (int i=0; i < 22; i++) {
-            outputs[i] = 0;
+        for (int j=0; j < 22; j++) {
+            outputs[j] = 0;
         }
 
         for (int j=0; j < field_segments->at(i)->size(); j++) {

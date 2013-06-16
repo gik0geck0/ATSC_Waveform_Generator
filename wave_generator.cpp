@@ -76,12 +76,12 @@ int main() {
 
 	vector<byte>*tempBytes; //for temp step
 
-	for(int i=0; i < mpeg_packets; i++){
+	for(int i=0; i < mpeg_packets->size(); i++){
 		tempBytes = makeBytesFromBits(mpeg_packets->at(i)); //get the bytes
-		fieldBytes->insert(fieldBytes.end(), tempBytes->begin(), tempBytes->end();); //add bytes to stream
+		fieldBytes->insert(fieldBytes->end(), tempBytes->begin(), tempBytes->end()); //add bytes to stream
 		if(i !=0 && i%312 == 0){
 			fieldAllBytes->push_back(fieldBytes);
-			fieldBytes = new vector<byte>;
+			fieldBytes = new vector<byte>();
 		}
 	}	
 	if(fieldBytes->size() != 0){
@@ -91,10 +91,11 @@ int main() {
 		data_randomize(fieldAllBytes->at(i));
 		oneField = add_reed_solomon_parity(fieldAllBytes->at(i));
 		data_interleaving(oneField);
-		vsb8_packets->push_back(trellisEncoder(oneField));
+        vector<vector<int8_t>*>* field_vsb8 = trellisEncoder(oneField);
+        for (int j=0; j < field_vsb8->size(); j++) {
+            vsb8_packets->push_back(field_vsb8->at(i));
+        }
 	}
-
-
 
     delete mpeg_packets;
     delete tempBytes;

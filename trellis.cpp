@@ -131,6 +131,7 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field);
 
 //this main exists only for the purpose debuging. once the final product is finished this function will be deleted
 
+/*
 int main(){
 	vector<vector<uint8_t>*>* field;
 	field = new vector<vector<uint8_t>*>;
@@ -161,6 +162,7 @@ int main(){
 	cout << answer->size();
 	return 0;
 }
+*/
 
 
 
