@@ -279,6 +279,14 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 		fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));
 	}
 
+    for (int j=0; j < dataSegments->size(); j++) {
+        //printf("RS - Segment %i has size %i\n", 
+        if ( dataSegments->at(j)->size() != 828 ) {
+            printf("Segment %i does not have 828 bytes. Instead: %i\n", j, dataSegments->at(j)->size());
+        }
+    }
+
+
 	int fieldToInsert=0; //the index of the field to insert from the vector fieldSyncs
 	for(int i = 0; i < dataSegments->size(); i++){
 		if(i%NUMBER_SEGMENTS_AFTER_FIELD == 0){
@@ -298,22 +306,23 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 		//segSync(dataSegments->at(j));
         //
         //Make a new vector, and put the segment sync at the beginning
-        seg_sync->push_back(5);
-        seg_sync->push_back(-5);
-        seg_sync->push_back(-5);
-        seg_sync->push_back(5);
+        seg_sync->push_back((int8_t) 5);
+        seg_sync->push_back((int8_t) -5);
+        seg_sync->push_back((int8_t) -5);
+        seg_sync->push_back((int8_t) 5);
 
         //printf("Adding the provious data onto it\n");
         // Push the data from the old segment into the new vector, after the sync
         for (int j=0; j < dataSegments->at(i)->size(); j++) {
             seg_sync->push_back(dataSegments->at(i)->at(j));
         }
-
         //printf("Deleting the old data\n");
-        //delete (*dataSegments)[i];
+        delete dataSegments->at(i);
+
 
         //printf("Saving the new segment to replace the old\n");
         (*dataSegments)[i] = seg_sync;
+
         if ( dataSegments->at(i)->size() != 832 ) {
             printf("Segment %i does not have 832 bytes after the segment sync was inserted. Instead: %i\n", i, dataSegments->at(i)->size());
         }

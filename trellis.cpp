@@ -235,10 +235,11 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 		voltageSegment = new vector<int8_t>;
 		segmentBits = new vector<bit>;
 	}
-	//cout << "finished encoding" << endl;
+	cout << "finished encoding" << endl;
 
 	delete bits;
 	delete voltageSegment;
+
 	return allVoltageSegments;
 }
 

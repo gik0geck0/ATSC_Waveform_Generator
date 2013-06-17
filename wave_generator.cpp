@@ -64,31 +64,32 @@ int main() {
     // get rid of the MPEG sync byte, so it can later be replaced by the ATSC sync byte
     // divide into 187 byte segments, WITHOUT any sync byte
     printf("Removing MPEG sync byte, and dividing into mpeg packets\n");
-    std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(mpeg_stream);
+    //std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(mpeg_stream);
+    remove_sync_byte(mpeg_stream);
 
     vector<vector<int8_t>*>* vsb8_packets = new vector<vector<int8_t>*>();
-
-    vector<byte>* fieldBytes = new vector<byte>; //holds all the bytes of a field
+    vector<byte>* fieldBytes = new vector<byte>(); //holds all the bytes of a field
     vector<vector<byte>*>* oneField = new vector<vector<byte>*>; // will hold at most 312 data segments
+
     vector<vector<byte>*>* fieldAllBytes = new vector<vector<byte>*>;
     vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>; //holds the data fields
 
-	vector<byte>*tempBytes; //for temp step
-
-	for(int i=0; i < mpeg_packets->size(); i++){
-		tempBytes = makeBytesFromBits(mpeg_packets->at(i)); //get the bytes
-		fieldBytes->insert(fieldBytes->end(), tempBytes->begin(), tempBytes->end()); //add bytes to stream
-		if(i !=0 && i%312 == 0){
+	for(int i=0; i < mpeg_stream->size(); i++){
+		if (i !=0 && i%(187*312) == 0) {
 			fieldAllBytes->push_back(fieldBytes);
 			fieldBytes = new vector<byte>();
 		}
+        fieldBytes->push_back(mpeg_stream->at(i));
     }
+
+    printf("First byte: %i - Last byte: %i\n", (int) fieldAllBytes->at(0)->at(0), (int) fieldAllBytes->at(0)->at(fieldAllBytes->at(0)->size()-1));
 
 	if(fieldBytes->size() != 0){
 		fieldAllBytes->push_back(fieldBytes);
 	}
 
 	for(int i = 0; i < fieldAllBytes->size(); i++){
+        printf("Field %i has %i bytes\n", i, fieldAllBytes->at(i)->size());
         printf("Randomizing field %i\n", i);
 		data_randomize(fieldAllBytes->at(i));
 
@@ -103,12 +104,10 @@ int main() {
         for (int j=0; j < field_vsb8->size(); j++) {
             vsb8_packets->push_back(field_vsb8->at(i));
         }
-
+        printf("Done with field %i\n", i);
 	}
 
-    delete mpeg_packets;
-    delete tempBytes;
-    //exit(0);
+    //delete mpeg_packets;
 
     printf("There is a total of %i segments\n", vsb8_packets->size());
     for (int j=0; j < vsb8_packets->size(); j++) {

@@ -46,7 +46,7 @@ void data_randomize(vector<byte> *mpeg_frame)
 	// check to see if the mpg_frame is disible by 8
 	if((mpeg_frame->size() % NUM_BYTES) != 0)
 	{
-		printf("WARNING!!! Transport stream not divisible by 187\n");
+		printf("WARNING!!! Transport stream not divisible by 187. Got: %i\n", mpeg_frame->size());
 	}
 
     printf("Creating bits from byes\n");
