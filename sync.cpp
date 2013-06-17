@@ -282,7 +282,7 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
     for (int j=0; j < dataSegments->size(); j++) {
         //printf("RS - Segment %i has size %i\n", 
         if ( dataSegments->at(j)->size() != 828 ) {
-            printf("Segment %i does not have 828 bytes. Instead: %i\n", j, dataSegments->at(j)->size());
+            printf("SUPER AMAZING Segment %i does not have 828 bytes. Instead: %i\n", j, dataSegments->at(j)->size());
         }
     }
 
@@ -317,7 +317,8 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
             seg_sync->push_back(dataSegments->at(i)->at(j));
         }
         //printf("Deleting the old data\n");
-        delete dataSegments->at(i);
+        //Why? Why can't this be here???
+        //delete dataSegments->at(i);
 
 
         //printf("Saving the new segment to replace the old\n");
