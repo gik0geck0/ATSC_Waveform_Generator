@@ -26,7 +26,10 @@ byte alphas[] = { 174, 165, 121, 121, 198, 228, 22, 187, 36, 69, 150, 112, 220, 
  */
 vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
 
+    printf("RS - Dividing into segments\n");
     std::vector<std::vector<byte>*>* field_segments = divide_into_segments(input_bytes);
+
+    printf("Deleting input bytes\n");
     delete input_bytes;
 
     for (int i=0; i < field_segments->size(); i++) {
@@ -109,6 +112,8 @@ std::vector<std::vector<byte>*>* divide_into_segments(std::vector<byte>* field_b
 
         field_segments->push_back(my_segment);
     }
+
+    return field_segments;
 }
 
 // Comes from wikipedia page on Finite Field Arithmetic

@@ -178,7 +178,7 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 	vector<vector<int8_t>*>* allVoltageSegments= new vector<vector<int8_t>*>;
 	buffers* buffer;
 	segmentBits = new vector<bit>;
-	cout << "making buffers" << endl;
+	//cout << "making buffers" << endl;
 	for(int i = 0; i < 12; i++){//intialize the 12 buffers 
 		buffer = new buffers;
 		buffer->D1 = new vector<bit>;
@@ -191,20 +191,20 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 		}
 		encoder->push_back(buffer);
 	}
-	cout << "made buffers" << endl;
-	cout << "doing encoding" << endl;
+	//cout << "made buffers" << endl;
+	//cout << "doing encoding" << endl;
 	for(int j = 0; j < field->size(); j++){ //iterate over each segment
-		cout << "J is now " << j << endl;
+		//cout << "J is now " << j << endl;
 		currentSegment = field->at(j); 
 		int segMod = j % 3;
-		cout << "segMod is " << segMod << endl;
+		//cout << "segMod is " << segMod << endl;
 		if(segMod == 0){ //decides if I start at 0, 4, or 8 trellis encoder
-			cout << "about to encode" << endl;
+			//cout << "about to encode" << endl;
 			for(int k= 0; k < currentSegment->size(); k++){
-				cout << "k is now " << k << endl;
+				//cout << "k is now " << k << endl;
 				bits = master(currentSegment->at(k), encoder->at(k%12), k); //bits is an itermediate place holder
-				cout << "encoding is done for segment" << endl;
-				cout << "pushing bits onto segmentbits" << endl;
+				//cout << "encoding is done for segment" << endl;
+				//cout << "pushing bits onto segmentbits" << endl;
 				for(int n=0; n < bits->size(); n++){
 					segmentBits->push_back(bits->at(n));//push bits generated from bit into the vector that holds all the bits of a segment.
 				}
@@ -220,7 +220,7 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 		}
 		else{
 			for(int k = 0; k <currentSegment->size(); k++){
-				cout << "k is " << k << endl;
+				//cout << "k is " << k << endl;
 				bits = master(currentSegment->at(k), encoder->at((k+8)%12),k);
 				for(int n=0; n < bits->size(); n++){
 					segmentBits->push_back(bits->at(n));
@@ -232,7 +232,7 @@ vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
 		voltageSegment = new vector<int8_t>;
 		segmentBits = new vector<bit>;
 	}
-	cout << "finished encoding" << endl;
+	//cout << "finished encoding" << endl;
 
 	delete bits;
 	delete voltageSegment;

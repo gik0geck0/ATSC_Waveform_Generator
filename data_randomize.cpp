@@ -19,6 +19,7 @@ void data_randomize(vector<byte>* mpeg_frame);
 
 void data_randomize(vector<byte> *mpeg_frame)
 {
+    printf("Beginning data randomization\n");
 	int i;
 	bit feedbackBit;
 	vector<bit>* mpeg_frame_bits;
@@ -40,6 +41,7 @@ void data_randomize(vector<byte> *mpeg_frame)
 	fixedRandomizingBytes[5] = polynomial[12-1];
 	fixedRandomizingBytes[6] = polynomial[13-1];
 	fixedRandomizingBytes[7] = polynomial[14-1];
+    printf("Initialization complete\n");
 
 	// check to see if the mpg_frame is disible by 8
 	if((mpeg_frame->size() % NUM_BYTES) != 0)
@@ -47,11 +49,11 @@ void data_randomize(vector<byte> *mpeg_frame)
 		printf("WARNING!!! Transport stream not divisible by 187\n");
 	}
 
-
-
+    printf("Creating bits from byes\n");
 	mpeg_frame_bits = makeBitsFromBytes(mpeg_frame);
 	
 
+    printf("Entering randomize loop\n");
 	for(i = 0; i < mpeg_frame_bits->size(); i += BYTE_SIZE)
 	{
 		// XOR bytes
@@ -94,13 +96,15 @@ void data_randomize(vector<byte> *mpeg_frame)
 		fixedRandomizingBytes[6] = polynomial[13-1];
 		fixedRandomizingBytes[7] = polynomial[14-1];
 	}
+    printf("Ending randomize loop\n");
 
 	//delete mpeg_frame;
 	temp = makeBytesFromBits(mpeg_frame_bits);
 	
 	if(temp->size() != mpeg_frame->size())
-		cout << "Something we wrong!!!!!" << endl;
+        printf("Something went wrong!!!!!\n");
 
+    printf("Saving temporaries into the mpeg frame\n");
 	for(i = 0; i < temp->size(); i++)
 	{
 		mpeg_frame->at(i) = temp->at(i);

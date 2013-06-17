@@ -32,13 +32,12 @@ typedef uint8_t byte;
 typedef std::vector<vector<byte>*> field;
 
 void verify_data(std::vector<int16_t>* data);
-void read_in_file(char* file_name, std::vector<bit>* input_stream);
-void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
-void read_mpeg(std::vector<byte>* input_stream);
+//void read_in_file(char* file_name, std::vector<bit>* input_stream);
+//void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
+//void read_mpeg(std::vector<byte>* input_stream);
 
 int main() {
-    char* file = "tmp/kittens.mpg";
-   // char* file = "~/downloads/imp18.jpg";
+    char* file = "temp.ts";
     system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
     // read in MPEG
     std::vector<byte>* mpeg_stream = new vector<byte>();
@@ -72,7 +71,7 @@ int main() {
     vector<byte>* fieldBytes = new vector<byte>; //holds all the bytes of a field
     vector<vector<byte>*>* oneField = new vector<vector<byte>*>; // will hold at most 312 data segments
     vector<vector<byte>*>* fieldAllBytes = new vector<vector<byte>*>;
-    vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>;; //holds the data fields
+    vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>; //holds the data fields
 
 	vector<byte>*tempBytes; //for temp step
 
@@ -83,14 +82,22 @@ int main() {
 			fieldAllBytes->push_back(fieldBytes);
 			fieldBytes = new vector<byte>();
 		}
-	}	
+    }
+
 	if(fieldBytes->size() != 0){
 		fieldAllBytes->push_back(fieldBytes);
 	}
 	for(int i = 0; i < fieldAllBytes->size(); i++){
+        printf("Randomizing field %i\n", i);
 		data_randomize(fieldAllBytes->at(i));
+
+        printf("Adding Reed Solomon Parity for field %i\n", i);
 		oneField = add_reed_solomon_parity(fieldAllBytes->at(i));
+
+        printf("Interleaving Data in field %i\n", i);
 		data_interleaving(oneField);
+
+        printf("Doing Trellis encoding in field %i\n", i);
         vector<vector<int8_t>*>* field_vsb8 = trellisEncoder(oneField);
         for (int j=0; j < field_vsb8->size(); j++) {
             vsb8_packets->push_back(field_vsb8->at(i));
@@ -113,6 +120,8 @@ int main() {
     printf("Number of ints: %i\n", as_int16->size());
  
     verify_data(as_int16);
+
+    printf("Sending data to wave form generator\n");
     send_data_to_generator(as_int16);
     
     // Cleanup

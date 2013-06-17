@@ -65,6 +65,12 @@ void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
 
 void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
     FILE* f = fopen(file_name, "rb");
+
+    if (!f) {
+        printf("Could not open file %s\n", file_name);
+        exit(1);
+    }
+
     fseek(f, 0L, SEEK_END);
     long filelen = ftell(f);
     rewind(f);

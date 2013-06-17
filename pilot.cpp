@@ -27,11 +27,15 @@ vector<vector<float>*>* pilot_insertion(vector<segment*>* data_frame)
 	}
 
 	// delete data_frame
+    /*
 	for(i = 0; i < data_frame->size(); i++)
 	{
 		delete data_frame->at(i);
 		(*data_frame)[i] = NULL;
 	} 
+    */
+
+    printf("Pilot inserton is deleting data frame\n");
 	delete data_frame;
 	data_frame = NULL;
 	return frameWithPilot;
