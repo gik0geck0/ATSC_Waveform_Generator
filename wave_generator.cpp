@@ -120,8 +120,6 @@ int main() {
     // synchronize the fields
     printf("Syncing packets\n");
     syncMux(vsb8_packets);
-
-    exit(0);
     
     // Pilot insertion
     printf("Performing Pilot insertion\n");
@@ -134,7 +132,7 @@ int main() {
     verify_data(as_int16);
 
     printf("Sending data to wave form generator\n");
-    //send_data_to_generator(as_int16);
+    send_data_to_generator(as_int16);
     
     // Cleanup
     for (int i=0; i < vsb8_signal->size(); i++) {
