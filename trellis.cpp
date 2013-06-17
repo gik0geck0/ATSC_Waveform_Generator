@@ -167,6 +167,9 @@ int main(){
 
 
 vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
+    printf("Trellis Encoder found %i segments\n", field->size());
+
+
 	shouldBeTrue x = false;
 	vector<buffers*>* encoder = new vector<buffers*>;
 	vector<vector<uint8_t>*>* currentField;

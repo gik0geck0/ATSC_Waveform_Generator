@@ -38,7 +38,7 @@ vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
         // The FIRST element is what's stored in the GATE
         // index = power of X
         byte outputs[21];
-        for (int j=0; j < 22; j++) {
+        for (int j=0; j < 21; j++) {
             outputs[j] = 0;
         }
 
@@ -56,8 +56,16 @@ vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
         }
 
         // outputs now contains the parity bytes
-        for (int j=1; j < 22; j++) {
+        for (int j=1; j < 21; j++) {
             field_segments->at(i)->push_back(outputs[j]);
+        }
+    }
+
+    //printf("Reed Solomon sees %i segments\n", field_segments->size());
+    for (int i=0; i < field_segments->size(); i++) {
+        //printf("RS - Segment %i has size %i\n", 
+        if ( field_segments->at(i)->size() != 207 ) {
+            printf("RS - Segment %i does not have 207 bytes. Instead: %i\n", i, field_segments->at(i)->size());
         }
     }
 
@@ -76,7 +84,7 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
         outputs[0] = 0;
     }
 
-    for (int i=21; i > 0; i--) {
+    for (int i=20; i > 0; i--) {
         /*
         printf("%i: ", i);
         printf("%i -> ", outputs[i]);
@@ -91,7 +99,6 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
         */
     }
 
-
     // the last output will be output. X^20 is output
     return outputs[20];
 }
@@ -99,7 +106,7 @@ byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
 std::vector<std::vector<byte>*>* divide_into_segments(std::vector<byte>* field_bytes) {
     std::vector<std::vector<byte>*>* field_segments = new std::vector<std::vector<byte>*>();
     int num_segments = field_bytes->size()/187;
-    if (num_segments < 312) {
+    if (num_segments != 312) {
         printf("Warning:    Reed-solomon has come across an incomplete data-field. Expected 312 segments, but got %i\n", num_segments);
     }
 

@@ -87,6 +87,7 @@ int main() {
 	if(fieldBytes->size() != 0){
 		fieldAllBytes->push_back(fieldBytes);
 	}
+
 	for(int i = 0; i < fieldAllBytes->size(); i++){
         printf("Randomizing field %i\n", i);
 		data_randomize(fieldAllBytes->at(i));
@@ -102,14 +103,26 @@ int main() {
         for (int j=0; j < field_vsb8->size(); j++) {
             vsb8_packets->push_back(field_vsb8->at(i));
         }
+
 	}
 
     delete mpeg_packets;
     delete tempBytes;
+    //exit(0);
+
+    printf("There is a total of %i segments\n", vsb8_packets->size());
+    for (int j=0; j < vsb8_packets->size(); j++) {
+        //printf("RS - Segment %i has size %i\n", 
+        if ( vsb8_packets->at(j)->size() != 828 ) {
+            printf("Segment %i does not have 828 bytes. Instead: %i\n", j, vsb8_packets->at(j)->size());
+        }
+    }
 
     // synchronize the fields
     printf("Syncing packets\n");
     syncMux(vsb8_packets);
+
+    exit(0);
     
     // Pilot insertion
     printf("Performing Pilot insertion\n");
@@ -122,7 +135,7 @@ int main() {
     verify_data(as_int16);
 
     printf("Sending data to wave form generator\n");
-    send_data_to_generator(as_int16);
+    //send_data_to_generator(as_int16);
     
     // Cleanup
     for (int i=0; i < vsb8_signal->size(); i++) {

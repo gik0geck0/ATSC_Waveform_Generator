@@ -263,7 +263,6 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 	segment* lastSegment;
 	int fieldSyncNum = 1;//will always have at least 1 field sync 
 	bool evenMult = false; //to check if it is an even amount of 312 or not
-	
 
 	for(int i = 0; i < dataSegments->size(); i++){//for each data segment
 		if(i%NUMBER_SEGMENTS_BEFORE_FIELD == 0 && i != 0){
@@ -280,7 +279,6 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 		fieldSyncs->push_back(makeNewField(fieldSyncNum, lastSegment));
 	}
 
-
 	int fieldToInsert=0; //the index of the field to insert from the vector fieldSyncs
 	for(int i = 0; i < dataSegments->size(); i++){
 		if(i%NUMBER_SEGMENTS_AFTER_FIELD == 0){
@@ -288,12 +286,48 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 			fieldToInsert++;
 		}
 	}
+
+    printf("Adding segment syncs\n");
+    for (int i=0; i < dataSegments->size(); i++) {
+        if ( dataSegments->at(i)->size() != 828 ) {
+            printf("Segment %i does not have 828 bytes. Instead: %i\n", i, dataSegments->at(i)->size());
+        }
+        
+        //printf("Making new vector\n");
+        segment* seg_sync = new segment();
+		//segSync(dataSegments->at(j));
+        //
+        //Make a new vector, and put the segment sync at the beginning
+        seg_sync->push_back(5);
+        seg_sync->push_back(-5);
+        seg_sync->push_back(-5);
+        seg_sync->push_back(5);
+
+        //printf("Adding the provious data onto it\n");
+        // Push the data from the old segment into the new vector, after the sync
+        for (int j=0; j < dataSegments->at(i)->size(); j++) {
+            seg_sync->push_back(dataSegments->at(i)->at(j));
+        }
+
+        //printf("Deleting the old data\n");
+        //delete (*dataSegments)[i];
+
+        //printf("Saving the new segment to replace the old\n");
+        (*dataSegments)[i] = seg_sync;
+        if ( dataSegments->at(i)->size() != 832 ) {
+            printf("Segment %i does not have 832 bytes after the segment sync was inserted. Instead: %i\n", i, dataSegments->at(i)->size());
+        }
+    }
+
+    /*
 	for(int i = 0; i < dataSegments->size(); i++){
 		if((*dataSegments)[i]->size() != SYMBOLS_PER_SEGMENT_BEFORE_SYNC){
 			cout << "In function syncMux: Encountered unexpected size of segment before segment sync addon at index " << i << endl << "Expected 828\nGot " << (*dataSegments)[i]->size()<<endl;
 		}
 		segSync((*dataSegments)[i]);
 	}
+    */
+
 	return dataSegments;
 	
 }
