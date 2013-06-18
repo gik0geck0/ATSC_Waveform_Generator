@@ -4,7 +4,7 @@
  * and returns the new pointer
  *
  */
-
+#pragma once
 #include <vector>
 #include <stdio.h>
 #include <queue>
@@ -12,103 +12,92 @@
 #include <stdlib.h>
 #include <iostream>
 #include "common.cpp"
-typedef bool bit;
-typedef uint8_t byte;
+
+#define null (256)
+
+
+typedef bool     bit;
+typedef uint8_t  byte;
+typedef uint16_t dbyte;
+
 using namespace std;
 
 static const int BYTES_PER_SEGMENT_FEC = 207;
-
+static const int NUMBER_OF_QUEUES = 52;
 void data_interleaving(vector<vector<byte>*>*);
 
-
-void data_interleaving(vector<vector<byte>*>* bytes)
-// WARNING: this function delets bitStream and returns a new interleaved bit Stream
+// for testing
+/*
+int main(void)
 {
-	const int NUMBER_OF_QUEUE = 4;
-	const int QUUEUE_BUFFER_OFFSET = 4;
-	int clock, i, j;
-	int start, end, current;
-	int offsetCounter;
-	int iter;
-	vector<byte> normal;
-	queue<byte> buffer[NUMBER_OF_QUEUE];
+	vector<byte>* test = new vector<byte>();
+	for(int i = 0; i < 50; i++)
+	{
+		for(int j = 0; j < 10; j++)
+		test->push_back(i*10 + j);
+	}
 
-	clock = 0;
+	vector<vector<byte>*>* some = new vector<vector<byte>*>();
+	some->push_back(test);
+
+	data_interleaving(some);
+
+	for(int i = 0; i < some->size(); i++)
+		for(int j = 0; j < some->at(i)->size(); j++)
+		{
+			printf("%i\n",(int)some->at(i)->at(j));
+		}
+}
+
+*/
+void data_interleaving(vector<vector<byte>*>* bytes)
+{
+	int i,j,clockCounter, iter;
+	int numberOfEmptyQueues;
+	bool allQueuesEmpty = false;
+	vector<byte> normal;
+	queue<dbyte> interleaver[52];
+
+	// initialize interleaver
+	for(i = 0; i < NUMBER_OF_QUEUES; i++)
+		for(j = 0; j < i*4; j++)
+			interleaver[i].push(null);
+
+
+	clockCounter = 0;
 	for(i = 0; i < bytes->size(); i++)
-	{	for(j = 0; j < bytes->at(i)->size(); j++)
-		{	buffer[clock].push(bytes->at(i)->at(j));
-			clock = (clock + 1) % NUMBER_OF_QUEUE;
+	{
+		for(j = 0; j < bytes->at(i)->size(); j++)
+		{
+			interleaver[clockCounter].push(bytes->at(i)->at(j));
+			clockCounter = (clockCounter + 1) % NUMBER_OF_QUEUES;
 		}
 	}
 
-	start = 0;
-	end = 0;
-	current = 0;
-
-	offsetCounter = 0;
-
-	while(true) // majic sorry
-	{	normal.push_back(buffer[current].front());
-		buffer[current].pop();
-
-		if(!(current == end))
-		{	current++;
-			continue;
-		}
-
-		if(buffer[start].size() == 0)
-		{	if(start == end)
-			{	if(end == (NUMBER_OF_QUEUE - 1))
-					break; // THIS SHOULD FIRE
-				start++;
-				end++;
-				offsetCounter = 0;
-				current = start;
-				if(buffer[start].size() == 0) // if numbers don't fill up one slot
-					break;
-				continue;
-			}
-			else
-			{	start++;
-				if(!(offsetCounter == 4))
-				{	offsetCounter++;
-					current = start;
-					continue;
+	while(!allQueuesEmpty)
+	{
+		numberOfEmptyQueues = 0;
+		for(i = 0; i < NUMBER_OF_QUEUES; i++)
+		{
+			if(interleaver[i].size() != 0)
+			{
+				if(interleaver[i].front() == null)
+				{
+					interleaver[i].pop();
 				}
 				else
-				{	offsetCounter = 0;
-					if(end == (NUMBER_OF_QUEUE - 1))
-					{	current = start;
-						continue;
-					}
-					else
-					{	end++;
-						current++;
-						continue;
-					}
+				{
+					normal.push_back(interleaver[i].front());
+					interleaver[i].pop();
 				}
-				continue;
-			}
-		}
-		else
-		{	if(!(offsetCounter == 4))
-			{	offsetCounter++;
-				current = start;
-				continue;
 			}
 			else
-			{	offsetCounter = 0;
-				if(end == (NUMBER_OF_QUEUE - 1))
-				{	current = start;
-					continue;
-				}
-				else
-				{	end++;
-					current++;
-					continue;
-				}
+			{
+				numberOfEmptyQueues++;
 			}
 		}
+		if(numberOfEmptyQueues == 52)
+			allQueuesEmpty = true;
 	}
 
 	iter = 0;
@@ -121,68 +110,3 @@ void data_interleaving(vector<vector<byte>*>* bytes)
 	}
 }
 
-
-
-// for testing
-/*
-int main(void)
-{
-	int i;
-	vector<byte> *bytes;
-	vector<bit> testBit;
-	vector<byte> *byteStream = new vector<byte>;
-	vector<bit> *bitStream = new vector<bit>();
-	for(i = 1; i < 208; i++)
-		byteStream->push_back(i);
-	bitStream = data_interleaving(makeBitsFromBytes(byteStream));
-	delete byteStream;
-	byteStream = makeBytesFromBits(bitStream);
-	for(i= 0; i < byteStream->size(); i++)
-	{
-		printf("%i\n",byteStream->at(i));
-	}
-
-	// testing the function makeByteFromBits and makeBitsFromBytes
-	
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(1);
-
-	bytes = makeBytesFromBits(&testBit);
-
-	for(i = testBit.size() -1; i >=0; i--)
-	{
-		printf("%i",(int) testBit.at(i));
-	}
-	printf("\n");
-
-	for(i = 0; i < bytes->size(); i++)
-	{
-		printf("%i\n",bytes->at(i) );
-	}
-	testBit = (*makeBitsFromBytes(bytes));
-
-	for(i = testBit.size() -1; i >=0; i--)
-	{
-		printf("%i",(int) testBit.at(i));
-	}
-	printf("\n");
-
-	return 0;
-
-}
-*/
