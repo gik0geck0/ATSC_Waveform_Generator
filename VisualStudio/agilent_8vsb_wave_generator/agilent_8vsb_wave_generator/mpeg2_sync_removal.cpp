@@ -32,6 +32,29 @@ vector< vector<bit>* >* remove_sync_bit(vector<byte>* inputStream)
 	return bitPackage;
 }
 
+vector<byte>* remove_sync_byte(vector<byte>* inputStream)
+{
+	// This function will delete the inputSteam
+	int i, j, numberOfPackets;
+
+    //printf("Mod 188? %i\n", inputStream->size() % TS_SIZE);
+	if(!((inputStream->size() % TS_SIZE) == 0)) {
+        printf("Input stream was of an invalid size\n");
+		exit(1);
+    }
+
+	numberOfPackets = inputStream->size() / TS_SIZE;
+
+    /*
+	for(i = 0; i < numberOfPackets; i++)
+	{
+        inputStream->erase(inputStream->begin() + numberOfPackets * TS_SIZE);
+	}
+    */
+
+    return inputStream;
+}
+
 void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
     FILE* f = fopen(file_name, "rb");
     fseek(f, 0L, SEEK_END);
@@ -54,6 +77,12 @@ void read_in_bits(char* file_name, std::vector<bit>* input_stream) {
 
 void read_in_bytes(char* file_name, std::vector<byte>* input_stream) {
     FILE* f = fopen(file_name, "rb");
+
+    if (!f) {
+        printf("Could not open file %s\n", file_name);
+        exit(1);
+    }
+
     fseek(f, 0L, SEEK_END);
     long filelen = ftell(f);
     rewind(f);

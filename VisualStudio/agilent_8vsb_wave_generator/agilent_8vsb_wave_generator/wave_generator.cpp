@@ -15,7 +15,7 @@
 #include "trellis.h"
 #include "sync.h"
 #include "pilot.h"
-
+#include "common.h"
 
 #ifdef _WIN32 // for windows systems
 	#include "agilent_windows_interface.h"
@@ -24,7 +24,7 @@
 	system("del temp.ts");
 	}
 #else // for linux systems
-//#include "agilent_wave_interface.cpp"
+  #include "agilent_wave_interface.h"
   void remove()
    {
     system("rm temp.ts");
@@ -33,36 +33,23 @@
 
 typedef bool bit;
 typedef uint8_t byte;
+typedef std::vector<vector<byte>*> field;
 
 void verify_data(std::vector<int16_t>* data);
-void read_in_file(char* file_name, std::vector<bit>* input_stream);
-void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
-void read_mpeg(std::vector<byte>* input_stream);
-std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* data_segments);
-void exitProgram(int exit); // to make command line stay open after program is finished
+//void read_in_file(char* file_name, std::vector<bit>* input_stream);
+//void read_in_bytes(char* file_name, std::vector<byte>* input_stream);
+//void read_mpeg(std::vector<byte>* input_stream);
 
-int main(int argc, char* argv[]) {
-
-	char* file;
-	string systemCall;
-	if(argc != 2) {
-		printf("Please input a file name\n");
-	//	exitProgram(1);
-	}
-	file = "imgres.jpg";
-    
-	systemCall = "ffmpeg -i ";
-	systemCall += file;
-	systemCall += " -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts"; // 
-	// char* file = "~/downloads/imp18.jpg";
-	system(systemCall.c_str());
-	// read in MPEG
+int main() {
+    char* file = "temp.ts";
+    system("ffmpeg -i Testing/image.jpg -loglevel 0 -vcodec mpeg2video -f mpegts temp.ts");
+    // read in MPEG
     std::vector<byte>* mpeg_stream = new vector<byte>();
 
     printf("Reading in file\n");
-    read_in_bytes("temp.ts", mpeg_stream);
+    read_in_bytes(file, mpeg_stream);
 
-   // remove(); // removes the temp transport stream 
+    remove(); // removes the temp transport stream 
 
     // Prints out every 188th byte. It should be 0x47
     /*
@@ -81,32 +68,59 @@ int main(int argc, char* argv[]) {
     // get rid of the MPEG sync byte, so it can later be replaced by the ATSC sync byte
     // divide into 187 byte segments, WITHOUT any sync byte
     printf("Removing MPEG sync byte, and dividing into mpeg packets\n");
-    std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(mpeg_stream);
+    //std::vector<vector<bit>*>* mpeg_packets = remove_sync_bit(mpeg_stream);
+    remove_sync_byte(mpeg_stream);
 
     vector<vector<int8_t>*>* vsb8_packets = new vector<vector<int8_t>*>();
+    vector<byte>* fieldBytes = new vector<byte>(); //holds all the bytes of a field
+    vector<vector<byte>*>* oneField = new vector<vector<byte>*>; // will hold at most 312 data segments
 
-    for ( int i=0; i < mpeg_packets->size(); i++) {
+    
+    vector<vector<byte>*>* fieldAllBytes = new vector<vector<byte>*>;
+    vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>; //holds the data fields
 
-        // randomize the 187 bytes
-        printf("Randomizing packet %i\n", i);
-        data_randomize(mpeg_packets->at(i));
-
-        // create the 20 byte reed solomon pairities
-        printf("Adding parity to packet %i\n", i);
-        add_reed_solomon_parity(mpeg_packets->at(i));
-
-
-        // Mix up the bits with interleaving
-        printf("Interleaving packet %i\n", i);
-        mpeg_packets->at(i) = data_interleaving(mpeg_packets->at(i));
-
-        // use trellis encoding to go from symbols to 8-VSB levels
-        printf("Trellis Encoding packet %i\n", i);
-        vsb8_packets->push_back(trellisEncoder(mpeg_packets->at(i)));
+	for(int i=0; i < mpeg_stream->size(); i++){
+		if (i !=0 && i%(187*312) == 0) {
+			fieldAllBytes->push_back(fieldBytes);
+			fieldBytes = new vector<byte>();
+		}
+        fieldBytes->push_back(mpeg_stream->at(i));
     }
 
-    delete mpeg_packets;
+    printf("First byte: %i - Last byte: %i\n", (int) fieldAllBytes->at(0)->at(0), (int) fieldAllBytes->at(0)->at(fieldAllBytes->at(0)->size()-1));
 
+	if(fieldBytes->size() != 0){
+		fieldAllBytes->push_back(fieldBytes);
+	}
+
+	for(int i = 0; i < fieldAllBytes->size(); i++){
+        printf("Field %i has %i bytes\n", i, fieldAllBytes->at(i)->size());
+        printf("Randomizing field %i\n", i);
+		data_randomize(fieldAllBytes->at(i));
+
+        printf("Adding Reed Solomon Parity for field %i\n", i);
+		oneField = add_reed_solomon_parity(fieldAllBytes->at(i));
+	
+        printf("Interleaving Data in field %i\n", i);
+		data_interleaving(oneField);
+
+        printf("Doing Trellis encoding in field %i\n", i);
+        vector<vector<int8_t>*>* field_vsb8 = trellisEncoder(oneField);
+        for (int j=0; j < field_vsb8->size(); j++) {
+            vsb8_packets->push_back(field_vsb8->at(j));
+        }
+        printf("Done with field %i\n", i);
+	}
+
+    //delete mpeg_packets;
+
+    printf("There is a total of %i segments\n", vsb8_packets->size());
+    for (int j=0; j < vsb8_packets->size(); j++) {
+        //printf("RS - Segment %i has size %i\n", 
+        if ( vsb8_packets->at(j)->size() != 828 ) {
+            printf("Segment %i does not have 828 bytes. Instead: %i\n", j, vsb8_packets->at(j)->size());
+        }
+    }
     // synchronize the fields
     printf("Syncing packets\n");
     syncMux(vsb8_packets);
@@ -120,6 +134,8 @@ int main(int argc, char* argv[]) {
     printf("Number of ints: %i\n", as_int16->size());
  
     verify_data(as_int16);
+
+    printf("Sending data to wave form generator\n");
     send_data_to_generator(as_int16);
     
     // Cleanup
@@ -127,8 +143,6 @@ int main(int argc, char* argv[]) {
         delete vsb8_signal->at(i);
     }
     delete vsb8_signal;
-	system("pause");
-	return EXIT_SUCCESS;
 }
 
 void verify_data(std::vector<int16_t>* data) {
@@ -141,24 +155,4 @@ void verify_data(std::vector<int16_t>* data) {
     for ( std::set<int16_t>::iterator iter = my_set.begin(); iter != my_set.end(); iter++) {
         printf("In set: %i\n", *iter);
     }
-}
-
-std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* data_segments) {
-    std::vector<int16_t>* signal_map = new std::vector<int16_t>();
-    
-    for (int i=0; i < data_segments->size(); i++) {
-        for (int j=0; j < data_segments->at(i)->size(); j++) {
-            signal_map->push_back((int16_t)((data_segments->at(i)->at(j)-1.25)*(32767.0/7)));
-        }
-    }
-
-    return signal_map;
-}
-
-void exitProgram(int exit)
-{
-	system("pause");
-	if(exit == 0)
-		std::exit(EXIT_SUCCESS);
-	std::exit(EXIT_FAILURE);
 }

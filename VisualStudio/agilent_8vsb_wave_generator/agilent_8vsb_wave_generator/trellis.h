@@ -1,13 +1,35 @@
-#pragma once
 #include <cstdlib>
 #include <vector>
 #include <stdio.h>
 #include <iostream>
 #include <stdint.h>
+#include "common.h"
+#include <set>
+
+
+/*READ THIS
+ *after finding out that the early part of code is supposed to work on a per data field basis, rather than a per segment
+ *this code is going to be rather different, here is a couple rational for some of the steps so you remember them
+
+ *there is now a struct called buffers that holds the bit buffers D1, D2, D3. This will represent the 12 different
+ *trellis encoders
+ *
+ *Differential and convolution encoder do not take any differnt arguments. they shouldn't change either, dont touch these
+ *
+ *TrellisEncoder as a function is no longer a master function, instead it will only take a byte, and call convolution encoder 
+ *and differntial encoder with just that bit. it also will take a buffers struct representing which trellis encoder it is
+ *working with. it will be renamed to make the main call easier
+ *
+ *a new function called getByte will exist. it will take a byte from the entire field. 
+
+ a new master function will have to be made. It will likely be renamed to trellisEncoder for the sake of the main file,
+ but currently has the name master.
+ */
 
 using namespace std;
 
 typedef bool bit;
+typedef bool shouldBeTrue;
 const static int SYMBOL_DELAY = 12; // 12 symbol delay in trellis encoding
 const static int BIT_STREAM_LENGTH = 1656; // number of bits in 207 bytes (187 from transport stream + 20 Reed solomon)
 const static int RESULTING_BIT_STREAM_LENGTH = 2484;//number of bits that the resulting bit stream should have(1656 * 3/2)
@@ -30,10 +52,23 @@ struct outputBits {
 	bit z0;
 };
 
+//this struct will hold the buffers for each trellis encoder, can make each function work with a struct to determine which encoder it uses, rather than make a class with methods
+//
+struct buffers{
+	vector<bit> *D1;
+	vector<bit> *D2;
+	vector<bit> *D3;
+};
+
 //returns the symbol pointer from stream
 //	Precondition: bit stream is a multiple of 2
 //	Postcondition: pointer to symbol on heap returned
-symbol* getSymbol(vector<bit> *bitStream, int symbolCounter);
+symbol* getSymbol(uint8_t byte, int symbolCounter);
+
+uint8_t getByte(vector<uint8_t> segment, int byteCounter);
+
+
+
 
 
 
@@ -74,4 +109,6 @@ vector<int8_t>* bitsToLevel(vector<bit>* bitStream);
 	Precondition:Bit steam is a multiple of 2
 	Postcondition:The bit stream is altered with the trellis encoding done.
 */
-vector<int8_t>* trellisEncoder(vector<bit>* bitStream);
+vector<bit>* master(uint8_t byte, buffers* dSet, int byteCount);
+
+vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field);

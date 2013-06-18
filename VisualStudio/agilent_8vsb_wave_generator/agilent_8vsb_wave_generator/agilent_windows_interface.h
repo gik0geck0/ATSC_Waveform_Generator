@@ -75,7 +75,7 @@
 #define SCPI_PORT 5025
 #define INPUT_BUF_SIZE (64*1024)
 
-
+std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* data_segments);
 
 char* custom_strdup(const char* input_string, int nchar);
 int init_winsock(void);

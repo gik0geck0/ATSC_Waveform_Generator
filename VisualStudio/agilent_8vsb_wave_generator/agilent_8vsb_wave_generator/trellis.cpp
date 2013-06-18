@@ -1,190 +1,160 @@
 #include "trellis.h"
+
 //this main exists only for the purpose debuging. once the final product is finished this function will be deleted
+
 /*
 int main(){
-	vector<bit>* test = new vector<bit>; //a test stream of bits
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(1);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(0);
-
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(0);
-
-	test->push_back(1);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(1);
-	test->push_back(0);
-
-	test->push_back(0);
-	test->push_back(0);
-
-	test->push_back(1);
-	test->push_back(1);
-
-	test->push_back(0);
-	test->push_back(1);
-
-	test->push_back(1);
-	test->push_back(1);
-	cout << "Input is\n";
-	for(int i = 0; i < test->size(); i++){
-		cout << ((*test)[i]);
-		if(i%2 == 1)
-			cout << " ";
+	vector<vector<uint8_t>*>* field;
+	field = new vector<vector<uint8_t>*>;
+	vector<vector<int8_t>*>* answer; 
+	vector<uint8_t>* segment = new vector<uint8_t>;
+	std::set<int8_t> derp;
+	for(int i =0; i < 312; i++){
+		for(int j = 0; j < 207; j++){
+			segment->push_back((uint8_t)((j*4+5*i)%255));
+		}
+		field->push_back(segment);
+		segment = new vector<uint8_t>;
 	}
-	cout << "\n";
-	cout << "Output is\n";
-	vector<int8_t>* derp;
-	derp = trellisEncoder(test);
-	for(int i = 0; i < derp->size(); i++){
-		cout << (int)(*derp)[i] << " "; 
+	answer= trellisEncoder(field);
+	for(int i = 0; i < answer->size(); i++){
+		if(answer->at(i)->size() != 828)
+			exit(1);
+		cout << endl << endl << "segment size is " << answer->at(i)->size() << endl<< endl;
+		for(int j = 0; j < answer->at(i)->size(); j++){
+			cout << (int)answer->at(i)->at(j) << " ";
+			derp.insert(answer->at(i)->at(j));
+			cout << "i is " << i << ", j is " << j << endl;
+		}
 	}
+	for(std::set<int8_t>::iterator it = derp.begin(); it != derp.end(); it++){
+		cout << (int)(*it) << " ";
+	}
+	cout << answer->size();
 	return 0;
 }
 */
 
 
-vector<int8_t>* trellisEncoder(vector<bit>* bitStream){
-	//check for a valid bitStream size
-	if(bitStream->size()%BITS_PER_SYMBOL){
-		cout << "In function trellisEncoder: Not given a bit stream whose length is a multiple of 2.\nGiven bit stream length is " << bitStream->size() << "\nAborting" << endl;
-		exit(1);
-	}
-	//A warning for incorrect bitStream size, will still proceede even if wrong however
-	if(bitStream->size() != BIT_STREAM_LENGTH){
-		cout << "In function trellisEncoder: Unexpected length of bit stream.\nExpected length of " << BIT_STREAM_LENGTH << "\nGot length of " << bitStream->size() << "\nContiuing with function, output may be improper\n" << endl;
-	}
-	//initilization block
-	int symbolCounter = 0;
-	vector<bit>* D1=new vector<bit>;
-	vector<bit>* D2=new vector<bit>;
-	vector<bit>* D3=new vector<bit>;
-	vector<bit>* newBitStream = new vector<bit>;
-	outputBits* output;
-	symbol* currentSymbol;
-	//push 0's onto every location of symbol buffer
-	for(int i = 0; i < SYMBOL_DELAY; i++){
-		D1->push_back(0);
-		D2->push_back(0);
-		D3->push_back(0);
-	}
-	for(int i = 0; i < bitStream->size()/BITS_PER_SYMBOL; i++){ //iterate by symbol(which is currently 2 bits)
-		//get the current 2 bit symbol from bit stream
-		currentSymbol = getSymbol(bitStream, symbolCounter);
-		
-		//generate output bits
-		differentialEncoder(currentSymbol, D1, symbolCounter);
-		output = convolutionEncoder(currentSymbol, D2, D3, symbolCounter);
 
-		//push output bits onto new bit stream
-		newBitStream->push_back(output->z2);
-		newBitStream->push_back(output->z1);
-		newBitStream->push_back(output->z0);
+vector<vector<int8_t>*>* trellisEncoder(vector<vector<uint8_t>*>* field){
+    printf("Trellis Encoder found %i segments\n", field->size());
 
-		//increment the symbol counter
-		symbolCounter++;
 
-		//free up memory, pointers will be reassigned
-		delete output;
-		delete currentSymbol;
-
-		//just for good coding practice, removing any dangling pointerss. 
-		output=NULL; 
-		currentSymbol=NULL;
-
-		//debug block
-		/*
-		if(symbolCounter %12 == 0){
-			cout << "D1 is currently at\n";
-			for(int i = 0; i < 12; i++){
-				cout<<(*D1)[i] << " ";
-			}
-			cout << "\nD2 is currently at\n";
-			for(int i = 0; i < 12; i++){
-				cout<<(*D2)[i] << " ";
-			}
-			cout <<"\nD3 is currently at \n";
-			for(int i = 0; i < 12; i++){
-				cout <<(*D3)[i] << " ";
-			}
-			cout << endl;
+	shouldBeTrue x = false;
+	vector<buffers*>* encoder = new vector<buffers*>;
+	vector<vector<uint8_t>*>* currentField;
+	vector<uint8_t>* currentSegment;
+	vector<bit>* bits;
+	vector<bit>* segmentBits;
+	vector<vector<bit>*>* allSegmentBits;
+	vector<int8_t>* voltageSegment = new vector<int8_t>;;
+	vector<vector<int8_t>*>* allVoltageSegments= new vector<vector<int8_t>*>;
+	buffers* buffer;
+	segmentBits = new vector<bit>;
+	//cout << "making buffers" << endl;
+	for(int i = 0; i < 12; i++){//intialize the 12 buffers 
+		buffer = new buffers;
+		buffer->D1 = new vector<bit>;
+		buffer->D2 = new vector<bit>;
+		buffer->D3 = new vector<bit>;
+		for(int j = 0; j<12; j++){
+			buffer->D1->push_back(0);
+			buffer->D2->push_back(0);
+			buffer->D3->push_back(0);
 		}
-		*/
+		encoder->push_back(buffer);
 	}
-
-	//deconstructors
-	delete currentSymbol;
-	currentSymbol = NULL;
-	delete output;
-	output = NULL;
-	delete D1;
-    delete D2;
-    delete D3;
-	D1 = NULL; D2 = NULL; D3 = NULL;
-
-	//make sure the resulting bit stream is the right length, splurts out a warning if not, but will still return result
-	if(newBitStream->size() != RESULTING_BIT_STREAM_LENGTH){
-		cout << "In function trellisEncoder: Unexpected resulting bit stream length\nExpected " << RESULTING_BIT_STREAM_LENGTH << "\nGot " << newBitStream->size()<< endl;
+	//cout << "made buffers" << endl;
+	//cout << "doing encoding" << endl;
+	for(int j = 0; j < field->size(); j++){ //iterate over each segment
+		//cout << "J is now " << j << endl;
+		currentSegment = field->at(j); 
+		int segMod = j % 3;
+		//cout << "segMod is " << segMod << endl;
+		if(segMod == 0){ //decides if I start at 0, 4, or 8 trellis encoder
+			//cout << "about to encode" << endl;
+			for(int k= 0; k < currentSegment->size(); k++){
+				//cout << "k is now " << k << endl;
+				bits = master(currentSegment->at(k), encoder->at(k%12), k); //bits is an itermediate place holder
+				//cout << "encoding is done for segment" << endl;
+				//cout << "pushing bits onto segmentbits" << endl;
+				for(int n=0; n < bits->size(); n++){
+					segmentBits->push_back(bits->at(n));//push bits generated from bit into the vector that holds all the bits of a segment.
+				}
+			}
+		}
+		else if (segMod == 1){
+			for(int k = 0; k < currentSegment->size(); k++){
+				bits = master(currentSegment->at(k), encoder->at((k+4)%12), k);
+				for(int n=0; n < bits->size(); n++){
+					segmentBits->push_back(bits->at(n));
+				}
+			}
+		}
+		else{
+			for(int k = 0; k <currentSegment->size(); k++){
+				//cout << "k is " << k << endl;
+				bits = master(currentSegment->at(k), encoder->at((k+8)%12),k);
+				for(int n=0; n < bits->size(); n++){
+					segmentBits->push_back(bits->at(n));
+				}
+			}
+		}
+		voltageSegment= bitsToLevel(segmentBits); //an intermediate step, just makes this already ugly function a little less ugly
+		allVoltageSegments->push_back(voltageSegment);
+		voltageSegment = new vector<int8_t>;
+		segmentBits = new vector<bit>;
 	}
+	cout << "finished encoding" << endl;
 
-	delete bitStream; //remove old data
-	bitStream = newBitStream; //reassign pointers
-	vector<int8_t>* levels; // the returned pointer of vectors
-	levels = bitsToLevel(bitStream); //convert stream of bits to voltage levels
-	delete bitStream; //delete old bitstream
-	bitStream = NULL; //reassign dangling pointer
-	return levels; 
+	delete bits;
+	delete voltageSegment;
+
+	return allVoltageSegments;
 }
 
-outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int symbolCounter){
+
+vector<bit>* master(uint8_t byte, buffers* dSet, int byteCount){
+	symbol* a; 
+	symbol*	b; 
+	symbol*	c; 
+	symbol*	d;
+	vector<bit>* returnBits = new vector<bit>;
+	outputBits* outA; 
+	outputBits* outB; 
+	outputBits* outC; 
+	outputBits* outD;
+	a = getSymbol(byte, 0);
+	b = getSymbol(byte, 1);
+	c = getSymbol(byte, 2);
+	d = getSymbol(byte, 3);
+	differentialEncoder(a, dSet->D1, (byteCount *4));
+	differentialEncoder(b, dSet->D1, (byteCount *4)+1);
+	differentialEncoder(c, dSet->D1, (byteCount *4)+2);
+	differentialEncoder(d, dSet->D1, (byteCount *4)+3);
+	outA = convolutionEncoder(a, dSet->D2, dSet->D3, (byteCount%4));
+	outB = convolutionEncoder(b, dSet->D2, dSet->D3, (byteCount%4)+1);
+	outC = convolutionEncoder(c, dSet->D2, dSet->D3, (byteCount%4)+2);
+	outD = convolutionEncoder(d, dSet->D2, dSet->D3, (byteCount%4)+3);
+	returnBits->push_back(outA->z2);
+	returnBits->push_back(outA->z1);
+	returnBits->push_back(outA->z0);
+	returnBits->push_back(outB->z2);
+	returnBits->push_back(outB->z1);
+	returnBits->push_back(outB->z0);
+	returnBits->push_back(outC->z2);
+	returnBits->push_back(outC->z1);
+	returnBits->push_back(outC->z0);
+	returnBits->push_back(outD->z2);
+	returnBits->push_back(outD->z1);
+	returnBits->push_back(outD->z0);
+	return returnBits;
+
+
+}
+
+outputBits* convolutionEncoder(symbol* y, vector<bit> *D2, vector<bit>* D3, int symbolCounter){
 	outputBits* output = new outputBits;
 	output->z2 = y->ms;//most sig bit is unaffected
 	output->z1 = y->ls;//z1 bit has no funny operation
@@ -199,10 +169,15 @@ outputBits* convolutionEncoder(symbol* y, vector<bit>* D2, vector<bit>* D3, int 
 	return output;
 }
 
-symbol* getSymbol(vector<bit>* bitStream, int symbolCounter){
+symbol* getSymbol(uint8_t byte, int symbolCounter){
 	symbol* outputSymbol = new symbol;
-	outputSymbol->ms = (*bitStream)[symbolCounter*2];
-	outputSymbol->ls = (*bitStream)[symbolCounter*2+1];	
+	vector<uint8_t>* derp=new vector<uint8_t>;
+        derp->push_back(byte);	
+	vector<bit>* bits;
+	bits = makeBitsFromBytes(derp);
+	outputSymbol->ms = (*bits)[symbolCounter*2];
+	outputSymbol->ls = (*bits)[symbolCounter*2+1];	
+	delete derp;
 	return outputSymbol;
 }
 
@@ -249,3 +224,4 @@ vector<int8_t>* bitsToLevel(vector<bit>* bitStream){
 	}
 	return voltageLevels;	
 }
+

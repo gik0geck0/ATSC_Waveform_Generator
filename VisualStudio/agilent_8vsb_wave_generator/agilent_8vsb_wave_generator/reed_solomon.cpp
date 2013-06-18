@@ -1,89 +1,64 @@
 #include "reed_solomon.h"
 
 /*
-int main() {
-    uint8_t a = 0x53;
-    uint8_t b = 0xCA;
-
-    bool arr[] = { 0,1,0,1,0,1,0,1, 0,1,0,1,1,1,0,1, 1,1,0,1,0,0,0,1 };
-    std::vector<bit>* data_stream = new std::vector<bit>();
-    for (int i=0; i < 24; i++) {
-        data_stream->push_back(arr[i]);
-    }
-
-    add_reed_solomon_parity(data_stream);
-    printf("Data Bytes {\n");
-    for (int i=0; i < data_stream->size(); i+=8) {
-        for (int j=0; j < 8; j++) {
-            printf("%i, ", (int) data_stream->at(i+j));
-        }
-        printf("\n");
-    }
-    printf("}\n");
-
-    exit(0);
-}
-*/
-
-/*
  *  Takes a segment of bits, and appends Reed-Solomon parity bits to the end
  *  Length of Input vector is expected to be 187 bytes ( 1496 bits )
+ *
+ *  Input bytes will contain an entire data-field (312 segments) of bytes
  */
-void add_reed_solomon_parity(std::vector<bit>* input_bits) {
-    
-    /*
-    if (input_bits->size() != 1496) {
-        printf("Reed Solomon Parity for ATSC is expected to apply to a single segment (1496 bits).\n");
-        printf("Expected Input Length: 1496, but got %i\n", input_bits->size());
-        exit(-1);
-    }
-    */
+vector<vector<byte>*>* add_reed_solomon_parity(std::vector<byte>* input_bytes) {
 
-    // This can be thought of as X.
-    // The FIRST element is what's stored in the GATE
-    // index = power of X
-	std::vector<byte> outputs;
-    for (int i=0; i < 21; i++) {
-		outputs.push_back(0);
-    }
+    printf("RS - Dividing into segments\n");
+    std::vector<std::vector<byte>*>* field_segments = divide_into_segments(input_bytes);
 
-    std::vector<byte>* input_bytes = makeBytesFromBits(input_bits);
-
-    for (int i=0; i < input_bytes->size(); i++) {
-
-        solomon_iteration(outputs, (*input_bytes)[i], true);
-
-        /*
-        printf("X array: { ");
-        for (int j=0; j < 21; j++) {
-            printf("%i, ", outputs[j]);
-        }
-        printf("}\n");
-        */
-    }
-
-    // outputs now contains the parity bytes
-    std::vector<byte> parity_bytes;
-    for (int i=1; i < 21; i++) {
-        parity_bytes.push_back(outputs[i]);
-    }
-
-    std::vector<bit>* parity_bits = makeBitsFromBytes(&parity_bytes);
-    
-    for ( int i=0; i < parity_bits->size(); i++) {
-        input_bits->push_back(parity_bits->at(i));
-    }
-
+    printf("Deleting input bytes\n");
     delete input_bytes;
-    delete parity_bits;
-	//delete outputs;
+
+    for (int i=0; i < field_segments->size(); i++) {
+
+        // This can be thought of as X.
+        // The FIRST element is what's stored in the GATE
+        // index = power of X
+        byte outputs[21];
+        for (int j=0; j < 21; j++) {
+            outputs[j] = 0;
+        }
+
+        for (int j=0; j < field_segments->at(i)->size(); j++) {
+
+            solomon_iteration(outputs, field_segments->at(i)->at(j), true);
+
+            /*
+            printf("X array: { ");
+            for (int j=0; j < 21; j++) {
+                printf("%i, ", outputs[j]);
+            }
+            printf("}\n");
+            */
+        }
+
+        // outputs now contains the parity bytes
+        for (int j=1; j < 21; j++) {
+            field_segments->at(i)->push_back(outputs[j]);
+        }
+    }
+
+    //printf("Reed Solomon sees %i segments\n", field_segments->size());
+    for (int i=0; i < field_segments->size(); i++) {
+        //printf("RS - Segment %i has size %i\n", 
+        if ( field_segments->at(i)->size() != 207 ) {
+            printf("RS - Segment %i does not have 207 bytes. Instead: %i\n", i, field_segments->at(i)->size());
+        }
+    }
+
+    return field_segments;
 }
 
 /*
  *  Performs a single modification to the output bytes, given an input byte.
  *  Originally, it was intended to work after the input bytes have been read in, but I'm not sure it's necesary anymore
  */
-byte solomon_iteration(std::vector<byte> outputs, byte input_byte, bool gate_open) {
+byte solomon_iteration(byte outputs[21], byte input_byte, bool gate_open) {
     if (gate_open) {
         // The GATE is open, so the feedback is active
         outputs[0] = gadd(outputs[19], input_byte);
@@ -106,9 +81,28 @@ byte solomon_iteration(std::vector<byte> outputs, byte input_byte, bool gate_ope
         */
     }
 
-
     // the last output will be output. X^20 is output
     return outputs[20];
+}
+
+std::vector<std::vector<byte>*>* divide_into_segments(std::vector<byte>* field_bytes) {
+    std::vector<std::vector<byte>*>* field_segments = new std::vector<std::vector<byte>*>();
+    int num_segments = field_bytes->size()/187;
+    if (num_segments != 312) {
+        printf("Warning:    Reed-solomon has come across an incomplete data-field. Expected 312 segments, but got %i\n", num_segments);
+    }
+
+    for (int i=0; i < num_segments; i++) {
+        std::vector<byte>* my_segment = new std::vector<byte>();
+        
+        for (int j=0; j < 187; j++) {
+            my_segment->push_back(field_bytes->at(i*j));
+        }
+
+        field_segments->push_back(my_segment);
+    }
+
+    return field_segments;
 }
 
 // Comes from wikipedia page on Finite Field Arithmetic

@@ -1,4 +1,18 @@
 #include "agilent_windows_interface.h"
+
+std::vector<int16_t>* convert_to_16bit_int(std::vector<std::vector<float>*>* data_segments) {
+    std::vector<int16_t>* signal_map = new std::vector<int16_t>();
+    
+    for (int i=0; i < data_segments->size(); i++) {
+        for (int j=0; j < data_segments->at(i)->size(); j++) {
+            signal_map->push_back((int16_t)((data_segments->at(i)->at(j)-1.25)*(32767.0/7)));
+        }
+    }
+
+    return signal_map;
+}
+
+
 char* custom_strdup(const char* input_string, int nchar) {
     char *dup = (char*) malloc(sizeof(char)*nchar);
     if (dup == NULL)
@@ -394,7 +408,7 @@ int send_data_to_generator(std::vector<int16_t>* integer_data)
         data_pointer[i*2+1] = (char) data_point & 0x00FF;
         //data_pointer[i*2+1] = data_pointer[i*2];
         //data_pointer[i*2] = data_pointer[i*2+1];
-        printf("At %i, Integer %i -> %i + %i\n", i, data_point, (int) data_pointer[i*2], (int) data_pointer[i*2+1]);
+       // printf("At %i, Integer %i -> %i + %i\n", i, data_point, (int) data_pointer[i*2], (int) data_pointer[i*2+1]);
     }
 
     //((char*) ((void*) integer_data));
@@ -416,7 +430,7 @@ int send_data_to_generator(std::vector<int16_t>* integer_data)
 
     for (int i=0; i < num_chars; i++) {
         if (i >= 99999 && i <= 100002) {
-            printf("Byte %i: %i\n", i, (int) data_pointer[i]);
+            //printf("Byte %i: %i\n", i, (int) data_pointer[i]);
         }
         data_str_builder << data_pointer[i];
     }

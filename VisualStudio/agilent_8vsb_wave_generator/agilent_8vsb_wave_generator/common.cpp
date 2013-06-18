@@ -22,9 +22,9 @@ std::vector<byte>* makeBytesFromBits(std::vector<bit> *bitStream)
 std::vector<bit> *makeBitsFromBytes(std::vector<byte> *byteStream)
 {
 	// Does not delete byteStream
-	byte i, j, mask;
+	int i, j;
+	byte mask;
 	std::vector<bit> *bitStream = new std::vector<bit>();
-
 	for(i = 0; i < byteStream->size(); i++)
 	{
 		mask = 0x80;

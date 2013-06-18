@@ -6,41 +6,64 @@
  */
 #include "data_interleaver.h"
 
-vector<bit>* data_interleaving(vector<bit> *bitStream)
-// WARNING: this function delets bitStream and returns a new interleaved bit Stream
+void data_interleaving(vector<vector<byte>*>* bytes)
 {
-	int i,j;
-	int bytestreamSize = BYTES_PER_SEGMENT_FEC;
-	vector<bit> *interleavedBits;
-	vector<byte> *byteStream;
-	byte convolutionalInterleaver[52][4];
+	int i,j,clockCounter, iter;
+	int numberOfEmptyQueues;
+	bool allQueuesEmpty = false;
+	vector<byte> normal;
+	queue<dbyte> interleaver[52];
 
-	// convert bits to bytes
-	byteStream = makeBytesFromBits(bitStream);
-	delete bitStream;
-	bitStream = NULL;
-	
-	if(byteStream->size() != BYTES_PER_SEGMENT_FEC)
-	{
-		printf("Byte Stream is %i long and not 207 bytes long.\n", (int)byteStream->size());
-	}
-	//interleave the bytes
-	for(i = 0; i < BYTES_PER_SEGMENT_FEC; i++)
-	{
-		convolutionalInterleaver[i % 52][i/52] = byteStream->at(i);
-	}
-	delete byteStream;
-	byteStream = NULL;
+	// initialize interleaver
+	for(i = 0; i < NUMBER_OF_QUEUES; i++)
+		for(j = 0; j < i*4; j++)
+			interleaver[i].push(null);
 
-	// new byte stream to pull data form the interleaver
-	byteStream = new vector<byte>();
-	for(i = 0; i < BYTES_PER_SEGMENT_FEC; i++)
-			byteStream->push_back(convolutionalInterleaver[i/4][i%4]);
-	// make bit stream
-	interleavedBits = makeBitsFromBytes(byteStream);
-	delete byteStream;
-	byteStream = NULL;
-	return interleavedBits;
+
+	clockCounter = 0;
+	for(i = 0; i < bytes->size(); i++)
+	{
+		for(j = 0; j < bytes->at(i)->size(); j++)
+		{
+			interleaver[clockCounter].push(bytes->at(i)->at(j));
+			clockCounter = (clockCounter + 1) % NUMBER_OF_QUEUES;
+		}
+	}
+
+	while(!allQueuesEmpty)
+	{
+		numberOfEmptyQueues = 0;
+		for(i = 0; i < NUMBER_OF_QUEUES; i++)
+		{
+			if(interleaver[i].size() != 0)
+			{
+				if(interleaver[i].front() == null)
+				{
+					interleaver[i].pop();
+				}
+				else
+				{
+					normal.push_back(interleaver[i].front());
+					interleaver[i].pop();
+				}
+			}
+			else
+			{
+				numberOfEmptyQueues++;
+			}
+		}
+		if(numberOfEmptyQueues == 52)
+			allQueuesEmpty = true;
+	}
+
+	iter = 0;
+	for(i = 0; i < bytes->size(); i++)
+	{	for(j = 0; j < bytes->at(i)->size(); j++)
+		{
+			bytes->at(i)->at(j) = normal.at(iter);
+			iter++;
+		}
+	}
 }
 
 

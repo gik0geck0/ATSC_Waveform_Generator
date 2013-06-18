@@ -3,13 +3,17 @@
 // The MSB is vector.at(0)
 #include "data_randomize.h"
 
-int data_randomize(vector<bit> *mpeg_frame)
+void data_randomize(vector<byte> *mpeg_frame)
 {
+    printf("Beginning data randomization\n");
 	int i;
 	bit feedbackBit;
+	vector<bit>* mpeg_frame_bits;
+	vector<byte>* temp;
 	// Initialize to 0xF180 by ATSC Standards
 	// In the format X + X^2 + X^3 + ... + X^16
-	bit polynomial[16] = { 	0,0,0,0, //0x0
+	bit polynomial[16] = { 	
+							0,0,0,0, //0x0
 							0,0,0,1, //0x8
 							1,0,0,0, //0x1
 							1,1,1,1  //0xF
@@ -24,25 +28,30 @@ int data_randomize(vector<bit> *mpeg_frame)
 	fixedRandomizingBytes[5] = polynomial[12-1];
 	fixedRandomizingBytes[6] = polynomial[13-1];
 	fixedRandomizingBytes[7] = polynomial[14-1];
+    printf("Initialization complete\n");
 
 	// check to see if the mpg_frame is disible by 8
-	if((mpeg_frame->size() % BYTE_SIZE) != 0)
+	if((mpeg_frame->size() % NUM_BYTES) != 0)
 	{
-		printf("Bit stream not disible by 8\n");
-		return 1;
+		printf("WARNING!!! Transport stream not divisible by 187. Got: %i\n", mpeg_frame->size());
 	}
+
+    printf("Creating bits from byes\n");
+	mpeg_frame_bits = makeBitsFromBytes(mpeg_frame);
 	
-	for(i = 0; i < mpeg_frame->size(); i += BYTE_SIZE)
+
+    printf("Entering randomize loop\n");
+	for(i = 0; i < mpeg_frame_bits->size(); i += BYTE_SIZE)
 	{
 		// XOR bytes
-		(*mpeg_frame)[i] 	 = (*mpeg_frame)[i] 	^ fixedRandomizingBytes[7];
-		(*mpeg_frame)[i + 1] = (*mpeg_frame)[i + 1] ^ fixedRandomizingBytes[6];
-		(*mpeg_frame)[i + 2] = (*mpeg_frame)[i + 2] ^ fixedRandomizingBytes[5];
-		(*mpeg_frame)[i + 3] = (*mpeg_frame)[i + 3] ^ fixedRandomizingBytes[4];
-		(*mpeg_frame)[i + 4] = (*mpeg_frame)[i + 4] ^ fixedRandomizingBytes[3];
-		(*mpeg_frame)[i + 5] = (*mpeg_frame)[i + 5] ^ fixedRandomizingBytes[2];
-		(*mpeg_frame)[i + 6] = (*mpeg_frame)[i + 6] ^ fixedRandomizingBytes[1];
-		(*mpeg_frame)[i + 7] = (*mpeg_frame)[i + 7] ^ fixedRandomizingBytes[0];
+		(*mpeg_frame_bits)[i] 	  = (*mpeg_frame_bits)[i] 	  ^ fixedRandomizingBytes[7];
+		(*mpeg_frame_bits)[i + 1] = (*mpeg_frame_bits)[i + 1] ^ fixedRandomizingBytes[6];
+		(*mpeg_frame_bits)[i + 2] = (*mpeg_frame_bits)[i + 2] ^ fixedRandomizingBytes[5];
+		(*mpeg_frame_bits)[i + 3] = (*mpeg_frame_bits)[i + 3] ^ fixedRandomizingBytes[4];
+		(*mpeg_frame_bits)[i + 4] = (*mpeg_frame_bits)[i + 4] ^ fixedRandomizingBytes[3];
+		(*mpeg_frame_bits)[i + 5] = (*mpeg_frame_bits)[i + 5] ^ fixedRandomizingBytes[2];
+		(*mpeg_frame_bits)[i + 6] = (*mpeg_frame_bits)[i + 6] ^ fixedRandomizingBytes[1];
+		(*mpeg_frame_bits)[i + 7] = (*mpeg_frame_bits)[i + 7] ^ fixedRandomizingBytes[0];
 
 		// Increment polynomial
 		feedbackBit = polynomial[16-1];
@@ -74,8 +83,24 @@ int data_randomize(vector<bit> *mpeg_frame)
 		fixedRandomizingBytes[6] = polynomial[13-1];
 		fixedRandomizingBytes[7] = polynomial[14-1];
 	}
-	return 0;
+    printf("Ending randomize loop\n");
+
+	//delete mpeg_frame;
+	temp = makeBytesFromBits(mpeg_frame_bits);
+	
+	if(temp->size() != mpeg_frame->size())
+        printf("Something went wrong!!!!!\n");
+
+    printf("Saving temporaries into the mpeg frame\n");
+	for(i = 0; i < temp->size(); i++)
+	{
+		mpeg_frame->at(i) = temp->at(i);
+	}
+
+	delete temp;
+	delete mpeg_frame_bits;
 }
+
 
 
 // This is for testing purposes
@@ -89,57 +114,28 @@ int data_randomize(vector<bit> *mpeg_frame)
 /*
 int main()
 {
-	vector<bit> testBit;
+	vector<byte>* testBit = new vector<byte>();
 
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(0);
-
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(1);
-	testBit.push_back(1);
-	testBit.push_back(0);
-
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(1);
-
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(0);
-	testBit.push_back(1);
-	testBit.push_back(1);
-	testBit.push_back(0);
-	testBit.push_back(0);
-
-	for(int i = testBit.size() -1; i >=0; i--)
+	for(int i = 0; i < 187; i++)
 	{
-		printf("%i",(int) testBit.at(i));
+		testBit->push_back(i);
+	}
+
+	for(int i = testBit->size() -1; i >=0; i--)
+	{
+		printf("%i",(int) testBit->at(i));
 	}
 	printf("\n");
 
-	data_randomize(&testBit);
+	data_randomize(testBit);
 
-	for(int i = testBit.size() -1; i >=0; i--)
+	//printf("Size of testBit is : %i", testBit->size());
+	for(int i = testBit->size() -1; i >=0; i--)
 	{
-		printf("%i",(int) testBit.at(i));
+		printf("%i",(int) testBit->at(i));
 	}
 	printf("\n");
+	system("pause");
 	return 0;
 }
 */
