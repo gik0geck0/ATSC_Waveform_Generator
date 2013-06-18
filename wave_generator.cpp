@@ -71,6 +71,7 @@ int main() {
     vector<byte>* fieldBytes = new vector<byte>(); //holds all the bytes of a field
     vector<vector<byte>*>* oneField = new vector<vector<byte>*>; // will hold at most 312 data segments
 
+    
     vector<vector<byte>*>* fieldAllBytes = new vector<vector<byte>*>;
     vector<vector<vector<byte>*>*>* seperatedFields = new vector<vector<vector<byte>*>*>; //holds the data fields
 
@@ -95,14 +96,14 @@ int main() {
 
         printf("Adding Reed Solomon Parity for field %i\n", i);
 		oneField = add_reed_solomon_parity(fieldAllBytes->at(i));
-
+	
         printf("Interleaving Data in field %i\n", i);
 		data_interleaving(oneField);
 
         printf("Doing Trellis encoding in field %i\n", i);
         vector<vector<int8_t>*>* field_vsb8 = trellisEncoder(oneField);
         for (int j=0; j < field_vsb8->size(); j++) {
-            vsb8_packets->push_back(field_vsb8->at(i));
+            vsb8_packets->push_back(field_vsb8->at(j));
         }
         printf("Done with field %i\n", i);
 	}
@@ -116,7 +117,6 @@ int main() {
             printf("Segment %i does not have 828 bytes. Instead: %i\n", j, vsb8_packets->at(j)->size());
         }
     }
-
     // synchronize the fields
     printf("Syncing packets\n");
     syncMux(vsb8_packets);

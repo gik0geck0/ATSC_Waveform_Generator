@@ -230,15 +230,14 @@ segment* makeNewField(int fieldSyncNum, segment* lastSegment){
 	fieldSync->insert(fieldSync->end(), pn63Block->begin(), pn63Block->end()); // insert the 92 length pn63 block;
 	fieldSync->insert(fieldSync->end(), last12Symbols->begin(), last12Symbols->end()); //add last 12 symbols
 	//destructors
-	delete mode;
-	delete pn511Block;
-	delete pn63Block;
-	delete last12Symbols;
+	//delete mode;
+	//delete pn511Block;
+	//delete pn63Block;
+	//delete last12Symbols;
 	mode = NULL;
 	pn511Block = NULL;
 	pn63Block = NULL;
 	last12Symbols = NULL;
-
 
 	return fieldSync;
 }
@@ -337,7 +336,7 @@ dataFrame* syncMux(vector<segment*>* dataSegments){
 		segSync((*dataSegments)[i]);
 	}
     */
-
+	
 	return dataSegments;
 	
 }
